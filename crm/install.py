@@ -16,9 +16,11 @@ def before_install():
 
 
 def after_install(force=False):
+	from crm.migration.sync import initialize
 	from crm.permissions.commission_agent import install_role
 
 	install_role()
+	initialize()
 	add_default_lead_statuses()
 	add_default_deal_statuses()
 	add_default_communication_statuses()

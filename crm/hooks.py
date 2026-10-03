@@ -310,7 +310,7 @@ doc_events = {
 # ---------------
 
 scheduler_events = {
-	"all": ["crm.api.event.trigger_offset_event_notifications"],
+	"all": ["crm.api.event.trigger_offset_event_notifications", "crm.migration.sync.scheduled_sync"],
 	"hourly": [
 		"crm.api.event.trigger_hourly_event_notifications",
 		"crm.automation.events.emit_overdue_tasks",
@@ -406,6 +406,7 @@ role_home_page = {"Commission Agent": "crm-agent"}
 auth_hooks = ["crm.permissions.commission_agent.restrict_request"]
 
 after_migrate = [
+	"crm.migration.sync.initialize",
 	"crm.permissions.commission_agent.install_role",
 	"crm.fcrm.doctype.fcrm_settings.fcrm_settings.after_migrate",
 	"crm.api.whatsapp.add_roles",

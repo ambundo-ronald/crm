@@ -1,0 +1,69 @@
+{
+ "doctype": "DocType",
+ "name": "CRM ERPNext Sync Settings",
+ "module": "FCRM",
+ "engine": "InnoDB",
+ "issingle": 1,
+ "autoname": "",
+ "field_order": [
+  "enabled",
+  "automatic",
+  "status_map",
+  "user_map",
+  "cursor",
+  "last_run"
+ ],
+ "fields": [
+  {
+   "fieldname": "enabled",
+   "label": "Enabled",
+   "fieldtype": "Check",
+   "default": "0",
+   "description": "Enable one-way ERPNext Lead sync. No production sync is enabled by installation."
+  },
+  {
+   "fieldname": "automatic",
+   "label": "Automatic",
+   "fieldtype": "Check",
+   "default": "0",
+   "description": "Process up to 50 leads each scheduler cycle. Requires scheduler and workers."
+  },
+  {
+   "fieldname": "status_map",
+   "label": "Status Map",
+   "fieldtype": "Code",
+   "options": "JSON",
+   "default": "{}"
+  },
+  {
+   "fieldname": "user_map",
+   "label": "User Map",
+   "fieldtype": "Code",
+   "options": "JSON",
+   "default": "{}"
+  },
+  {
+   "fieldname": "cursor",
+   "label": "Cursor",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_run",
+   "label": "Last Run",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

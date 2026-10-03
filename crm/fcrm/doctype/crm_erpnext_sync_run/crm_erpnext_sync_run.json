@@ -1,0 +1,45 @@
+{
+ "doctype": "DocType",
+ "name": "CRM ERPNext Sync Run",
+ "module": "FCRM",
+ "engine": "InnoDB",
+ "issingle": 0,
+ "autoname": "hash",
+ "field_order": [
+  "summary",
+  "results",
+  "next_cursor",
+  "has_more"
+ ],
+ "fields": [
+  {
+   "fieldname": "summary",
+   "label": "Summary",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "results",
+   "label": "Results",
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "next_cursor",
+   "label": "Next Cursor",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "has_more",
+   "label": "Has More",
+   "fieldtype": "Check"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
