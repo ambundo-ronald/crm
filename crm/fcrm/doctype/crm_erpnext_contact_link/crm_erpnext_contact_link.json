@@ -1,0 +1,100 @@
+{
+ "doctype": "DocType",
+ "name": "CRM ERPNext Contact Link",
+ "module": "FCRM",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "field_order": [
+  "edge_key",
+  "contact",
+  "source_doctype",
+  "source_name",
+  "target_doctype",
+  "target_name",
+  "link_name",
+  "state",
+  "approved_by",
+  "approved_owner",
+  "removed_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "edge_key",
+   "label": "Edge Key",
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "contact",
+   "label": "Contact",
+   "fieldtype": "Link",
+   "options": "Contact",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_doctype",
+   "label": "Source Type",
+   "fieldtype": "Link",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_name",
+   "label": "Source Record",
+   "fieldtype": "Dynamic Link",
+   "options": "source_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_doctype",
+   "label": "Target Type",
+   "fieldtype": "Link",
+   "options": "DocType",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_name",
+   "label": "Target Record",
+   "fieldtype": "Dynamic Link",
+   "options": "target_doctype",
+   "reqd": 1
+  },
+  {
+   "fieldname": "link_name",
+   "label": "Created Link Row",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "options": "Active\nRemoved",
+   "default": "Active"
+  },
+  {
+   "fieldname": "approved_by",
+   "label": "Approved By",
+   "fieldtype": "Link",
+   "options": "User"
+  },
+  {
+   "fieldname": "approved_owner",
+   "label": "Approved Target Owner",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "removed_by",
+   "label": "Removed By",
+   "fieldtype": "Link",
+   "options": "User"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "track_changes": 1
+}

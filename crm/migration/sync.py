@@ -47,6 +47,9 @@ def status():
 		"cursor": settings.cursor,
 		"last_run": settings.last_run,
 		"linked_leads": frappe.db.count(LINK),
+		"linked_organizations": frappe.db.count("CRM ERPNext Customer Link"),
+		"sync_customers": settings.sync_customers,
+		"customer_cursor": settings.customer_cursor,
 		"linked_deals": frappe.db.count("CRM ERPNext Opportunity Link"),
 		"sync_opportunities": settings.sync_opportunities,
 		"opportunity_cursor": settings.opportunity_cursor,
@@ -76,6 +79,16 @@ def configure_opportunities(enabled: bool = False):
 	_lock()
 	settings = frappe.get_single(SETTINGS)
 	settings.sync_opportunities = int(enabled)
+	settings.save()
+	return status()
+
+
+@frappe.whitelist(methods=["POST"])
+def configure_customers(enabled: bool = False):
+	require_admin()
+	_lock()
+	settings = frappe.get_single(SETTINGS)
+	settings.sync_customers = int(enabled)
 	settings.save()
 	return status()
 
@@ -129,13 +142,19 @@ def run_batch(automatic=False):
 		results.append(
 			{"source": source_name, "source_doctype": "Lead", "target_doctype": "CRM Lead", **result}
 		)
+	customers = {"has_more": False, "next_after": settings.customer_cursor}
+	if settings.sync_customers:
+		from crm.migration.customer import sync_batch as sync_customers
+
+		customers = sync_customers(settings)
+		results.extend(customers["results"])
 	opportunities = {"has_more": False, "next_after": settings.opportunity_cursor}
 	if settings.sync_opportunities:
 		from crm.migration.opportunity import sync_batch
 
 		opportunities = sync_batch(settings)
 		results.extend(opportunities["results"])
-	has_more = report["has_more"] or opportunities["has_more"]
+	has_more = report["has_more"] or customers["has_more"] or opportunities["has_more"]
 	counts = Counter(row["status"] for row in results)
 	run = frappe.get_doc(
 		{
@@ -152,6 +171,7 @@ def run_batch(automatic=False):
 		{
 			"cursor": report["next_after"] or "",
 			"opportunity_cursor": opportunities["next_after"] or "",
+			"customer_cursor": customers["next_after"] or "",
 			"last_run": now_datetime(),
 		},
 	)

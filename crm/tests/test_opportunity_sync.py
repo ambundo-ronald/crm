@@ -135,7 +135,7 @@ class TestOpportunitySync(IntegrationTestCase):
 	def test_unsupported_source_states_and_foreign_currency(self):
 		for field, value, issue in [
 			("status", "Converted", "opportunity_lifecycle_requires_review"),
-			("opportunity_from", "Customer", "customer_or_prospect_mapping_required"),
+			("opportunity_from", "Customer", "customer_mapping_required"),
 			("currency", "ZZZ", "currency_conversion_requires_review"),
 			("opportunity_owner", None, "opportunity_salesperson_requires_review"),
 		]:

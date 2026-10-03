@@ -1,6 +1,6 @@
 {
  "doctype": "DocType",
- "name": "CRM ERPNext Opportunity Link",
+ "name": "CRM ERPNext Customer Link",
  "module": "FCRM",
  "engine": "InnoDB",
  "issingle": 0,
@@ -13,11 +13,7 @@
   "target_snapshot",
   "source_creator",
   "source_created",
-  "source_modified",
-  "source_party",
-  "target_lead",
-  "source_party_doctype",
-  "target_organization"
+  "source_modified"
  ],
  "fields": [
   {
@@ -25,7 +21,7 @@
    "label": "Source DocType",
    "fieldtype": "Link",
    "options": "DocType",
-   "default": "Opportunity",
+   "default": "Customer",
    "read_only": 1,
    "reqd": 1
   },
@@ -41,7 +37,7 @@
    "fieldname": "target_name",
    "label": "Target Name",
    "fieldtype": "Link",
-   "options": "CRM Deal",
+   "options": "CRM Organization",
    "unique": 1,
    "reqd": 1
   },
@@ -71,29 +67,6 @@
    "fieldname": "source_modified",
    "label": "Source Modified",
    "fieldtype": "Datetime"
-  },
-  {
-   "fieldname": "source_party",
-   "label": "Original Source Lead",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "target_lead",
-   "label": "Linked CRM Lead",
-   "fieldtype": "Link",
-   "options": "CRM Lead"
-  },
-  {
-   "fieldname": "source_party_doctype",
-   "label": "Source Party Type",
-   "fieldtype": "Data",
-   "default": "Lead"
-  },
-  {
-   "fieldname": "target_organization",
-   "label": "Target Organization",
-   "fieldtype": "Link",
-   "options": "CRM Organization"
   }
  ],
  "permissions": [

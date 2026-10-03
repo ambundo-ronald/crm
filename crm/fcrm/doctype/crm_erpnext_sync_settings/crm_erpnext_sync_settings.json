@@ -14,7 +14,9 @@
   "last_run",
   "sync_opportunities",
   "opportunity_status_map",
-  "opportunity_cursor"
+  "opportunity_cursor",
+  "sync_customers",
+  "customer_cursor"
  ],
  "fields": [
   {
@@ -74,6 +76,19 @@
   {
    "fieldname": "opportunity_cursor",
    "label": "Opportunity Cursor",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sync_customers",
+   "label": "Sync Customers",
+   "fieldtype": "Check",
+   "default": "0",
+   "description": "Sync active company/partnership Customers to CRM Organizations. Contact links require separate review."
+  },
+  {
+   "fieldname": "customer_cursor",
+   "label": "Customer Cursor",
    "fieldtype": "Data",
    "read_only": 1
   }

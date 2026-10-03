@@ -52,15 +52,35 @@ def apply_opportunity(name, status_map, user_map):
 	source = frappe.get_doc("Opportunity", name, for_update=True)
 	if source.docstatus == 2 or source.status not in DEFAULT_STATUSES:
 		return review("opportunity_lifecycle_requires_review")
-	if source.opportunity_from != "Lead":
-		return review("customer_or_prospect_mapping_required")
-	lead_name = frappe.db.get_value(LEAD_LINK, {"source_name": source.party_name}, "target_name")
-	if not lead_name or not frappe.db.exists("CRM Lead", lead_name):
-		return review("sync_source_lead_first")
-	lead = frappe.get_doc("CRM Lead", lead_name, for_update=True)
-	erp_lead = frappe.get_doc("Lead", source.party_name)
-	if erp_lead.disabled or erp_lead.unsubscribed or erp_lead.status == "Do Not Contact":
-		return review("source_lead_contact_consent_requires_review")
+	lead = organization = None
+	lead_name = organization_name = None
+	if source.opportunity_from == "Lead":
+		lead_name = frappe.db.get_value(LEAD_LINK, {"source_name": source.party_name}, "target_name")
+		if not lead_name or not frappe.db.exists("CRM Lead", lead_name):
+			return review("sync_source_lead_first")
+		lead = frappe.get_doc("CRM Lead", lead_name, for_update=True)
+		erp_lead = frappe.get_doc("Lead", source.party_name)
+		if erp_lead.disabled or erp_lead.unsubscribed or erp_lead.status == "Do Not Contact":
+			return review("source_lead_contact_consent_requires_review")
+		party_filter = {"lead": lead.name}
+		mapping_filter = {"target_lead": lead.name}
+	elif source.opportunity_from == "Customer":
+		from crm.migration.customer import LINK as CUSTOMER_LINK
+		from crm.migration.customer import business_customer
+
+		if not frappe.db.exists("Customer", source.party_name):
+			return review("customer_mapping_required")
+		customer = frappe.get_doc("Customer", source.party_name, for_update=True)
+		if not business_customer(customer):
+			return review("customer_lifecycle_requires_review")
+		organization_name = frappe.db.get_value(CUSTOMER_LINK, {"source_name": customer.name}, "target_name")
+		if not organization_name or not frappe.db.exists("CRM Organization", organization_name):
+			return review("sync_source_customer_first")
+		organization = frappe.get_doc("CRM Organization", organization_name, for_update=True)
+		party_filter = {"organization": organization.name}
+		mapping_filter = {"target_organization": organization.name}
+	else:
+		return review("prospect_mapping_required")
 	creator = user_map.get(source.owner, source.owner)
 	if creator == "Guest" or not frappe.db.get_value("User", creator, "enabled"):
 		return review("creator_missing_or_disabled")
@@ -88,8 +108,15 @@ def apply_opportunity(name, status_map, user_map):
 		target = frappe.get_doc("CRM Deal", link.target_name, for_update=True)
 		if (
 			source.party_name != link.source_party
-			or lead.name != link.target_lead
-			or target.lead != lead.name
+			or (link.source_party_doctype or "Lead") != source.opportunity_from
+			or (lead_name or "") != (link.target_lead or "")
+			or (target.lead or "") != (lead_name or "")
+			or (
+				source.opportunity_from == "Customer"
+				and (
+					organization_name != link.target_organization or target.organization != organization_name
+				)
+			)
 			or target.owner != creator
 			or source.owner != link.source_creator
 		):
@@ -99,15 +126,13 @@ def apply_opportunity(name, status_map, user_map):
 		if frappe.db.get_value("CRM Deal Status", target.status, "type") not in ("Open", "Ongoing"):
 			return review("deal_lifecycle_requires_review")
 	else:
-		if lead.converted:
+		if lead and lead.converted:
 			return review("lead_already_converted")
 		# Existing manually-created deals are candidates, never automatic matches.
-		existing = frappe.get_all(
-			"CRM Deal", filters={"lead": lead.name}, pluck="name", limit_page_length=1001
-		)
+		existing = frappe.get_all("CRM Deal", filters=party_filter, pluck="name", limit_page_length=1001)
 		if len(existing) > 1000:
 			return review("deal_duplicate_inventory_incomplete")
-		mapped = set(frappe.get_all(LINK, filters={"target_lead": lead.name}, pluck="target_name"))
+		mapped = set(frappe.get_all(LINK, filters=mapping_filter, pluck="target_name"))
 		if set(existing) - mapped:
 			return review("existing_deal_requires_review")
 		status = status_map.get(source.status)
@@ -116,11 +141,12 @@ def apply_opportunity(name, status_map, user_map):
 		target = frappe.get_doc(
 			{
 				"doctype": "CRM Deal",
-				"lead": lead.name,
-				"lead_name": lead.lead_name,
-				"organization_name": lead.organization,
-				"first_name": lead.first_name,
-				"last_name": lead.last_name,
+				"lead": lead_name,
+				"lead_name": lead.lead_name if lead else None,
+				"organization": organization_name,
+				"organization_name": lead.organization if lead else organization.organization_name,
+				"first_name": lead.first_name if lead else None,
+				"last_name": lead.last_name if lead else None,
 				"status": status,
 				"deal_owner": assignee,
 				"currency": source.currency,
@@ -146,7 +172,9 @@ def apply_opportunity(name, status_map, user_map):
 				"source_name": source.name,
 				"target_name": target.name,
 				"source_party": source.party_name,
-				"target_lead": lead.name,
+				"target_lead": lead_name,
+				"target_organization": organization_name,
+				"source_party_doctype": source.opportunity_from,
 				"source_snapshot": json.dumps(incoming),
 				"target_snapshot": json.dumps(snapshot(target)),
 				"source_creator": source.owner,
