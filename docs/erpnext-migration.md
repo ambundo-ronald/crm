@@ -1,6 +1,6 @@
 ﻿# ERPNext migration mapping and read-only preview
 
-Status (2026-10-03): the completed CRM milestone is pushed to dev2. Migration is at the mapping and preview stage. No production access or imports have occurred.
+Status (2026-10-03): read-only preview remains available. An opt-in same-site Lead sync has now been implemented for local testing; see [ERPNext sync](erpnext-sync.md). No production access or imports have occurred.
 
 ## First supported slice
 
@@ -57,4 +57,4 @@ Duplicate scans are bounded to 10,000 source and 10,000 target leads. Larger inv
 
 Nine pure planner tests and three same-site integration tests pass. The integration suite wraps SQL during preview to reject write statements and verifies source timestamps/target records remain unchanged. It also tests pagination, malformed inputs, role restrictions and consent exceptions using temporary synthetic ERPNext Leads. Test setup creates fixtures; the preview itself does not.
 
-Next: review real source customizations and status/identity mapping using an isolated staging copy or sanitized export; implement persisted unique source mappings and a local sample importer; prove reruns do not duplicate records and rollback affects only the migration batch. Opportunity/history migration and continuous synchronization are separate remaining phases. No production import or sync is configured.
+Next: review real source customizations and status/identity mappings using isolated staging or a sanitized export. The separate Lead sync now implements persisted source links, periodic reconciliation, conflict detection and per-record rollback/retry. Opportunity/history migration, full-batch undo and production validation remain outstanding. No production import or sync is configured.

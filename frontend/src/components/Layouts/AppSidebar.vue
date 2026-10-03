@@ -55,6 +55,16 @@
           >
             <template #prefix><span class="lucide-calendar size-4" /></template>
           </SidebarItem>
+          <SidebarItem
+            v-if="isAdmin()"
+            :label="__('ERPNext sync')"
+            :to="{ name: 'ERPNextSync' }"
+            :active="activeItem === 'ERPNextSync'"
+          >
+            <template #prefix
+              ><span class="lucide-refresh-cw size-4"
+            /></template>
+          </SidebarItem>
           <CollapsibleSection
             v-for="section in allViews"
             :key="section.name"
@@ -377,7 +387,7 @@ function toggleHelpModal() {
 
 // onboarding
 const { user } = sessionStore()
-const { users, isManager } = usersStore()
+const { users, isManager, isAdmin } = usersStore()
 const { isOnboardingStepsCompleted, setUp } = useOnboarding('frappecrm')
 
 // The onboarding composable persists the checklist as a positional

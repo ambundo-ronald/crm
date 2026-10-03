@@ -170,3 +170,13 @@ Calendar design milestone: staff My Calendar now has a Google Calendar-inspired 
 Milestone checkpoint (2026-10-03): local setup, agent access, appointments, lead activity and staff calendar design are committed on dev2. Latest validation: 18 focused backend tests, 253 frontend tests, build and browser workflows pass. Separate staging, restore verification and the broader Lead fixture blocker remain open. Next: ERPNext mapping and a read-only migration preview; no production import is authorized or configured.
 
 Migration preview milestone (2026-10-03): same-site Lead mapping and administrative read-only preview implemented and tested locally. Nine planner tests and three integration tests pass, including write-rejecting SQL verification. Local inventory/report generated; production inventory, persisted source mapping, actual importer, Opportunity/history migration and ongoing sync remain open. See [migration mapping and preview](erpnext-migration.md).
+
+
+### 2026-10-03: opt-in ERPNext Lead sync
+
+- Added same-site Lead sync with administrator controls at `/crm/erpnext-sync`, manual batches and optional scheduled reconciliation.
+- Added unique source/destination mappings, original-creator preservation, field snapshots, conflict review, per-record failure rollback, persisted batch cursor and administrator run history.
+- CRM status/assignment remain CRM-owned after initial import. Shared contacts are not relinked; agent visibility continues to use the verified creator.
+- Sync is disabled by default. Local scheduler remains paused; production remains untouched.
+- Remaining: Opportunity/Deal and relationship/history mapping, large-inventory optimization, run retention, successful-batch undo, real-data staging and deployment/restore validation.
+- Details and local checks: [ERPNext sync](erpnext-sync.md).

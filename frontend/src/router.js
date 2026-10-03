@@ -23,6 +23,11 @@ async function shouldCapturePersona() {
 
 const routes = [
   {
+    path: '/erpnext-sync',
+    name: 'ERPNextSync',
+    component: () => import('@/pages/ERPNextSync.vue'),
+  },
+  {
     path: '/appointments',
     name: 'Appointments',
     component: () => import('@/pages/Appointments.vue'),
