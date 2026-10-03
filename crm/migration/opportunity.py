@@ -79,8 +79,19 @@ def apply_opportunity(name, status_map, user_map):
 		organization = frappe.get_doc("CRM Organization", organization_name, for_update=True)
 		party_filter = {"organization": organization.name}
 		mapping_filter = {"target_organization": organization.name}
+	elif source.opportunity_from == "Prospect":
+		from crm.migration.prospect import LINK as PROSPECT_LINK
+
+		organization_name = frappe.db.get_value(
+			PROSPECT_LINK, {"source_name": source.party_name}, "target_name"
+		)
+		if not organization_name or not frappe.db.exists("CRM Organization", organization_name):
+			return review("sync_source_prospect_first")
+		organization = frappe.get_doc("CRM Organization", organization_name, for_update=True)
+		party_filter = {"organization": organization.name}
+		mapping_filter = {"target_organization": organization.name}
 	else:
-		return review("prospect_mapping_required")
+		return review("unsupported_opportunity_party")
 	creator = user_map.get(source.owner, source.owner)
 	if creator == "Guest" or not frappe.db.get_value("User", creator, "enabled"):
 		return review("creator_missing_or_disabled")
@@ -112,7 +123,7 @@ def apply_opportunity(name, status_map, user_map):
 			or (lead_name or "") != (link.target_lead or "")
 			or (target.lead or "") != (lead_name or "")
 			or (
-				source.opportunity_from == "Customer"
+				source.opportunity_from in ("Customer", "Prospect")
 				and (
 					organization_name != link.target_organization or target.organization != organization_name
 				)

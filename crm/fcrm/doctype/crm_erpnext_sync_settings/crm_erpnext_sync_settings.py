@@ -10,6 +10,7 @@ class CRMERPNextSyncSettings(Document):
 		_lock()
 		# Desk saves cannot reset the internal cursor or last-run timestamp.
 		self.opportunity_cursor = frappe.db.get_single_value(SETTINGS, "opportunity_cursor")
+		self.prospect_cursor = frappe.db.get_single_value(SETTINGS, "prospect_cursor")
 		self.customer_cursor = frappe.db.get_single_value(SETTINGS, "customer_cursor")
 		self.cursor = frappe.db.get_single_value(SETTINGS, "cursor")
 		self.last_run = frappe.db.get_single_value(SETTINGS, "last_run")

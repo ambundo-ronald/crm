@@ -1,4 +1,4 @@
-"""Administrator-reviewed links to existing shared Contacts; never copy Contact data."""
+"""Administrator-reviewed links to existing shared Addresses; never copy Address data."""
 
 import hashlib
 import json
@@ -6,9 +6,8 @@ import json
 import frappe
 
 from crm.migration.sync import RUN, _lock, require_admin
-from crm.permissions.commission_agent import is_agent
 
-AUDIT = "CRM ERPNext Contact Link"
+AUDIT = "CRM ERPNext Address Link"
 MAPPINGS = {
 	"Lead": ("CRM ERPNext Sync Link", "CRM Lead"),
 	"Customer": ("CRM ERPNext Customer Link", "CRM Organization"),
@@ -26,20 +25,22 @@ def require_site():
 		frappe.throw("ERPNext must be installed on this site")
 
 
-def candidate(contact, source_type, source_name, lock=False):
+def candidate(address, source_type, source_name, lock=False):
 	if source_type not in MAPPINGS:
-		frappe.throw("Only existing Lead, Customer and Prospect contact links are supported")
-	doc = frappe.get_doc("Contact", contact, for_update=lock)
+		frappe.throw("Only existing Lead, Customer and Prospect address links are supported")
+	doc = frappe.get_doc("Address", address, for_update=lock)
 	row = {
-		"contact": doc.name,
-		"contact_label": doc.full_name or doc.name,
+		"address": doc.name,
+		"address_label": doc.address_title or doc.name,
 		"source_doctype": source_type,
 		"source_name": source_name,
 		"other_link_count": len(doc.links),
 		"other_links": [{"doctype": link.link_doctype, "name": link.link_name} for link in doc.links[:20]],
 	}
+	if doc.disabled:
+		return row | {"issues": ["disabled_address_requires_review"]}
 	if not any(link.link_doctype == source_type and link.link_name == source_name for link in doc.links):
-		return row | {"issues": ["source_contact_relationship_missing"]}
+		return row | {"issues": ["source_address_relationship_missing"]}
 	mapping_type, target_type = MAPPINGS[source_type]
 	mapping_name = frappe.db.get_value(mapping_type, {"source_name": source_name}, "name")
 	if not mapping_name:
@@ -72,7 +73,7 @@ def candidate(contact, source_type, source_name, lock=False):
 			"target_doctype": target_type,
 			"target_name": target.name,
 			"target_owner": target.owner,
-			"agent_visibility": target_type == "CRM Lead" and is_agent(target.owner),
+			"agent_visibility": False,
 			"already_linked": bool(existing),
 			"managed_link": audit.name if audit and existing and audit.link_name == existing.name else None,
 			"issues": [],
@@ -99,11 +100,11 @@ def candidate(contact, source_type, source_name, lock=False):
 
 
 @frappe.whitelist(methods=["GET", "POST"])
-def preview_contact_links(after: str = ""):
+def preview_address_links(after: str = ""):
 	require_site()
 	if len(after) > 140:
-		frappe.throw("Invalid contact cursor")
-	filters = {"parenttype": "Contact", "parentfield": "links", "link_doctype": ["in", list(MAPPINGS)]}
+		frappe.throw("Invalid address cursor")
+	filters = {"parenttype": "Address", "parentfield": "links", "link_doctype": ["in", list(MAPPINGS)]}
 	if after:
 		filters["name"] = [">", after]
 	links = frappe.get_all(
@@ -119,10 +120,10 @@ def preview_contact_links(after: str = ""):
 			row = candidate(link.parent, link.link_doctype, link.link_name)
 		except frappe.DoesNotExistError:
 			row = {
-				"contact": link.parent,
+				"address": link.parent,
 				"source_doctype": link.link_doctype,
 				"source_name": link.link_name,
-				"issues": ["source_or_contact_missing"],
+				"issues": ["source_or_address_missing"],
 			}
 		rows.append(row | {"key": link.name})
 	return {
@@ -133,30 +134,30 @@ def preview_contact_links(after: str = ""):
 
 
 @frappe.whitelist(methods=["POST"])
-def approve_contact_link(contact: str, source_doctype: str, source_name: str, preview_token: str):
+def approve_address_link(address: str, source_doctype: str, source_name: str, preview_token: str):
 	require_site()
 	_lock()
-	row = candidate(contact, source_doctype, source_name, lock=True)
+	row = candidate(address, source_doctype, source_name, lock=True)
 	if row["issues"]:
-		frappe.throw("Contact link requires review: " + ", ".join(row["issues"]))
+		frappe.throw("Address link requires review: " + ", ".join(row["issues"]))
 	if row["preview_token"] != preview_token:
-		frappe.throw("The contact or destination changed. Refresh the review before linking.")
+		frappe.throw("The address or destination changed. Refresh the review before linking.")
 	if row["already_linked"]:
 		return {"status": "Already linked"}
-	doc = frappe.get_doc("Contact", contact)
+	doc = frappe.get_doc("Address", address)
 	child = doc.append("links", {"link_doctype": row["target_doctype"], "link_name": row["target_name"]})
-	# Only add the verified relationship. Saving the entire Contact would run
+	# Only add the verified relationship. Saving the entire Address would run
 	# unrelated ERPNext/CRM detail-update hooks against this shared identity.
 	child.insert(ignore_permissions=True)
-	frappe.db.set_value("Contact", doc.name, "modified_by", frappe.session.user)
-	frappe.clear_document_cache("Contact", doc.name)
+	frappe.db.set_value("Address", doc.name, "modified_by", frappe.session.user)
+	frappe.clear_document_cache("Address", doc.name)
 	edge = digest([doc.name, row["target_doctype"], row["target_name"]])
 	audit_name = frappe.db.get_value(AUDIT, {"edge_key": edge}, "name")
 	audit = frappe.get_doc(AUDIT, audit_name) if audit_name else frappe.new_doc(AUDIT)
 	audit.update(
 		{
 			"edge_key": edge,
-			"contact": doc.name,
+			"address": doc.name,
 			"source_doctype": source_doctype,
 			"source_name": source_name,
 			"target_doctype": row["target_doctype"],
@@ -174,10 +175,10 @@ def approve_contact_link(contact: str, source_doctype: str, source_name: str, pr
 
 
 @frappe.whitelist(methods=["GET", "POST"])
-def managed_contact_links(after: str = ""):
+def managed_address_links(after: str = ""):
 	require_site()
 	if len(after) > 140:
-		frappe.throw("Invalid contact cursor")
+		frappe.throw("Invalid address cursor")
 	filters = {"state": "Active"}
 	if after:
 		filters["name"] = [">", after]
@@ -186,7 +187,7 @@ def managed_contact_links(after: str = ""):
 		filters=filters,
 		fields=[
 			"name",
-			"contact",
+			"address",
 			"source_doctype",
 			"source_name",
 			"target_doctype",
@@ -205,45 +206,45 @@ def managed_contact_links(after: str = ""):
 
 
 @frappe.whitelist(methods=["POST"])
-def remove_contact_link(name: str):
+def remove_address_link(name: str):
 	require_site()
 	_lock()
 	audit = frappe.get_doc(AUDIT, name, for_update=True)
 	if audit.state != "Active":
 		return {"status": "Already removed"}
-	frappe.get_doc("Contact", audit.contact, for_update=True)
+	frappe.get_doc("Address", audit.address, for_update=True)
 	if frappe.db.exists("Dynamic Link", audit.link_name):
 		link = frappe.get_doc("Dynamic Link", audit.link_name)
 		if (link.parent, link.parenttype, link.parentfield, link.link_doctype, link.link_name) != (
-			audit.contact,
-			"Contact",
+			audit.address,
+			"Address",
 			"links",
 			audit.target_doctype,
 			audit.target_name,
 		):
-			frappe.throw("The recorded link was changed. Review it in Contact before removal.")
+			frappe.throw("The recorded link was changed. Review it in Address before removal.")
 		frappe.db.delete("Dynamic Link", {"name": link.name})
-		frappe.db.set_value("Contact", audit.contact, "modified_by", frappe.session.user)
-		frappe.clear_document_cache("Contact", audit.contact)
+		frappe.db.set_value("Address", audit.address, "modified_by", frappe.session.user)
+		frappe.clear_document_cache("Address", audit.address)
 	audit.state = "Removed"
 	audit.removed_by = frappe.session.user
 	audit.save(ignore_permissions=True)
-	log_link(audit.contact, "Unlinked", audit.target_doctype, audit.target_name)
+	log_link(audit.address, "Unlinked", audit.target_doctype, audit.target_name)
 	return {"status": "Unlinked"}
 
 
-def log_link(contact, action, target_type, target_name):
+def log_link(address, action, target_type, target_name):
 	frappe.get_doc(
 		{
 			"doctype": RUN,
-			"summary": action + " shared Contact",
+			"summary": action + " shared Address",
 			"results": json.dumps(
 				[
 					{
-						"source": contact,
-						"source_doctype": "Contact",
-						"target": contact,
-						"target_doctype": "Contact",
+						"source": address,
+						"source_doctype": "Address",
+						"target": address,
+						"target_doctype": "Address",
 						"status": action,
 						"relationship": [target_type, target_name],
 					}

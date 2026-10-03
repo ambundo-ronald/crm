@@ -47,7 +47,10 @@ def status():
 		"cursor": settings.cursor,
 		"last_run": settings.last_run,
 		"linked_leads": frappe.db.count(LINK),
-		"linked_organizations": frappe.db.count("CRM ERPNext Customer Link"),
+		"linked_organizations": frappe.db.count("CRM ERPNext Customer Link")
+		+ frappe.db.count("CRM ERPNext Prospect Link"),
+		"sync_prospects": settings.sync_prospects,
+		"prospect_cursor": settings.prospect_cursor,
 		"sync_customers": settings.sync_customers,
 		"sync_customer_addresses": settings.sync_customer_addresses,
 		"customer_cursor": settings.customer_cursor,
@@ -100,6 +103,16 @@ def configure_customer_addresses(enabled: bool = False):
 	_lock()
 	settings = frappe.get_single(SETTINGS)
 	settings.sync_customer_addresses = int(enabled)
+	settings.save()
+	return status()
+
+
+@frappe.whitelist(methods=["POST"])
+def configure_prospects(enabled: bool = False):
+	require_admin()
+	_lock()
+	settings = frappe.get_single(SETTINGS)
+	settings.sync_prospects = int(enabled)
 	settings.save()
 	return status()
 
@@ -159,13 +172,21 @@ def run_batch(automatic=False):
 
 		customers = sync_customers(settings)
 		results.extend(customers["results"])
+	prospects = {"has_more": False, "next_after": settings.prospect_cursor}
+	if settings.sync_prospects:
+		from crm.migration.prospect import sync_batch as sync_prospects
+
+		prospects = sync_prospects(settings)
+		results.extend(prospects["results"])
 	opportunities = {"has_more": False, "next_after": settings.opportunity_cursor}
 	if settings.sync_opportunities:
 		from crm.migration.opportunity import sync_batch
 
 		opportunities = sync_batch(settings)
 		results.extend(opportunities["results"])
-	has_more = report["has_more"] or customers["has_more"] or opportunities["has_more"]
+	has_more = (
+		report["has_more"] or customers["has_more"] or prospects["has_more"] or opportunities["has_more"]
+	)
 	counts = Counter(row["status"] for row in results)
 	run = frappe.get_doc(
 		{
@@ -183,6 +204,7 @@ def run_batch(automatic=False):
 			"cursor": report["next_after"] or "",
 			"opportunity_cursor": opportunities["next_after"] or "",
 			"customer_cursor": customers["next_after"] or "",
+			"prospect_cursor": prospects["next_after"] or "",
 			"last_run": now_datetime(),
 		},
 	)

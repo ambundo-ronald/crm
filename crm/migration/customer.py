@@ -10,9 +10,12 @@ LINK = "CRM ERPNext Customer Link"
 LIMIT = 10000
 
 
-def inventory():
+def inventory(source_type="Customer"):
+	name_field = "customer_name" if source_type == "Customer" else "company_name"
 	return (
-		frappe.get_all("Customer", fields=["name", "customer_name"], limit_page_length=LIMIT + 1),
+		frappe.get_all(
+			source_type, fields=["name", name_field + " as customer_name"], limit_page_length=LIMIT + 1
+		),
 		frappe.get_all("CRM Organization", fields=["name", "organization_name"], limit_page_length=LIMIT + 1),
 	)
 
@@ -51,18 +54,30 @@ def sync_batch(settings):
 
 
 def apply_customer(name, user_map, seen=None, *, sync_addresses=False):
+	return apply_organization("Customer", name, user_map, seen, sync_addresses=sync_addresses)
+
+
+def apply_organization(source_type, name, user_map, seen=None, *, sync_addresses=False):
 	from crm.migration.opportunity import review
 	from crm.migration.sync import creator_context, require_admin
 
 	require_admin()
-	source = frappe.get_doc("Customer", name, for_update=True)
-	if not business_customer(source):
+	if source_type not in ("Customer", "Prospect"):
+		frappe.throw("Unsupported Organization source")
+	link_type = LINK if source_type == "Customer" else "CRM ERPNext Prospect Link"
+	source = frappe.get_doc(source_type, name, for_update=True)
+	if source_type == "Customer" and not business_customer(source):
 		return review("individual_disabled_or_frozen_customer_requires_review")
 	creator = user_map.get(source.owner, source.owner)
 	if creator == "Guest" or not frappe.db.get_value("User", creator, "enabled"):
 		return review("creator_missing_or_disabled")
-	incoming = {"organization_name": (source.customer_name or "").strip(), "website": source.website or ""}
-	if sync_addresses:
+	incoming = {
+		"organization_name": (
+			source.get("customer_name" if source_type == "Customer" else "company_name") or ""
+		).strip(),
+		"website": source.website or "",
+	}
+	if sync_addresses and source_type == "Customer":
 		address = source.customer_primary_address or ""
 		if address:
 			if not frappe.db.exists("Address", address):
@@ -75,12 +90,19 @@ def apply_customer(name, user_map, seen=None, *, sync_addresses=False):
 		incoming["address"] = address
 	if not incoming["organization_name"]:
 		return review("organization_name_required")
-	link_name = frappe.db.get_value(LINK, {"source_name": source.name}, "name")
-	link = frappe.get_doc(LINK, link_name) if link_name else None
-	sources, targets = seen if seen is not None else inventory()
+	link_name = frappe.db.get_value(link_type, {"source_name": source.name}, "name")
+	link = frappe.get_doc(link_type, link_name) if link_name else None
+	sources, targets = seen if seen is not None else inventory(source_type)
 	if len(sources) > LIMIT or len(targets) > LIMIT:
 		return review("organization_duplicate_inventory_incomplete")
 	key = incoming["organization_name"].casefold()
+	other_type = "Prospect" if source_type == "Customer" else "Customer"
+	other_field = "company_name" if other_type == "Prospect" else "customer_name"
+	others = frappe.get_all(other_type, pluck=other_field, limit_page_length=LIMIT + 1)
+	if len(others) > LIMIT:
+		return review("organization_duplicate_inventory_incomplete")
+	if any((value or "").strip().casefold() == key for value in others):
+		return review("customer_prospect_duplicate_candidates")
 	if any(
 		row.name != source.name and (row.customer_name or "").strip().casefold() == key for row in sources
 	):
@@ -98,7 +120,7 @@ def apply_customer(name, user_map, seen=None, *, sync_addresses=False):
 			)
 		frappe.get_doc(
 			{
-				"doctype": LINK,
+				"doctype": link_type,
 				"source_name": source.name,
 				"target_name": target.name,
 				"source_snapshot": json.dumps(incoming),
