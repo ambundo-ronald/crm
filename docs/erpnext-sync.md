@@ -4,7 +4,7 @@ Implemented locally on dev2 (2026-10-03). Production has not been accessed or co
 
 ## Using it
 
-Open **ERPNext sync** in the CRM sidebar as Administrator or System Manager, or visit `/crm/erpnext-sync`.
+Open the user menu, then **Settings → Integrations → ERPNext sync**, as Administrator or System Manager. The existing `/crm/erpnext-sync` URL remains available for bookmarks.
 
 1. Review the source data and the status/user mappings in **CRM ERPNext Sync Settings**. Empty maps use the proposed defaults in [erpnext-migration.md](erpnext-migration.md). User mapping changes can grant agent access, so map actual creators deliberately.
 2. Enable Lead sync. Optionally enable **Customer sync**, **Prospect sync** and **Opportunity sync**, then click **Sync now**. Each request processes up to 50 Leads, 50 selected Customers, 50 selected Prospects, and 50 selected Opportunities, in that order. **Sync next batch** continues a larger inventory.

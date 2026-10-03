@@ -70,6 +70,7 @@ import ProfilePage from '@/components/Settings/Profile/ProfilePage.vue'
 import PreferencesSettings from '@/components/Settings/PreferencesSettings.vue'
 import WhatsAppSettings from '@/components/Settings/WhatsAppSettings.vue'
 import ERPNextSettings from '@/components/Settings/ERPNextSettings.vue'
+import ERPNextSync from '@/pages/ERPNextSync.vue'
 import LeadSyncSourcePage from '@/components/Settings/LeadSyncing/LeadSyncSourcePage.vue'
 import DefaultsSettings from '@/components/Settings/DefaultsSettings.vue'
 import BrandSettings from '@/components/Settings/BrandSettings.vue'
@@ -97,7 +98,7 @@ import ShieldCheck from '~icons/lucide/shield-check'
 import LucideZap from '~icons/lucide/zap'
 import SlaConfig from './Sla/SlaConfig.vue'
 
-const { isManager, getUser } = usersStore()
+const { isManager, isAdmin, getUser } = usersStore()
 
 const user = computed(() => getUser() || {})
 
@@ -250,6 +251,12 @@ const tabs = computed(() => {
           icon: ERPNextIcon,
           component: markRaw(ERPNextSettings),
           condition: () => isManager(),
+        },
+        {
+          label: __('ERPNext sync'),
+          icon: 'refresh-cw',
+          component: markRaw(ERPNextSync),
+          condition: () => isAdmin(),
         },
         {
           label: __('Lead Syncing'),

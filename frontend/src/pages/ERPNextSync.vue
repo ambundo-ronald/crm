@@ -206,11 +206,21 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { showSettings } from '@/composables/settings'
 import ERPNextExtensions from '@/components/ERPNextExtensions.vue'
 import ERPNextAddressReview from '@/components/ERPNextAddressReview.vue'
 import ERPNextContactReview from '@/components/ERPNextContactReview.vue'
 import { Button, call } from 'frappe-ui'
+
+const route = useRoute()
+watch(
+  () => route.fullPath,
+  () => {
+    showSettings.value = false
+  },
+)
 
 const data = ref(null)
 const error = ref('')
