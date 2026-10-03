@@ -1,4 +1,4 @@
-# ERPNext Lead sync
+# ERPNext Lead and Opportunity sync
 
 Implemented locally on dev2 (2026-10-03). Production has not been accessed or configured. Sync is disabled by default.
 
@@ -7,16 +7,16 @@ Implemented locally on dev2 (2026-10-03). Production has not been accessed or co
 Open **ERPNext sync** in the CRM sidebar as Administrator or System Manager, or visit `/crm/erpnext-sync`.
 
 1. Review the source data and the status/user mappings in **CRM ERPNext Sync Settings**. Empty maps use the proposed defaults in [erpnext-migration.md](erpnext-migration.md). User mapping changes can grant agent access, so map actual creators deliberately.
-2. Enable Lead sync, then click **Sync now**. Each request processes up to 50 source leads. **Sync next batch** continues a larger inventory.
-3. Expand a run to see Created, Updated, Unchanged, Review, or Failed results and links to destination leads.
-4. Optionally turn on automatic sync. The scheduler processes one batch each `all` cycle, starting another pass after the previous pass completes. Site scheduler and background workers must be running. The local development scheduler remains paused.
+2. Enable Lead sync. Optionally enable **Opportunity sync**, then click **Sync now**. Each request processes up to 50 source leads and, when selected, 50 opportunities. **Sync next batch** continues a larger inventory.
+3. Expand a run to see Created, Updated, Unchanged, Review, or Failed results and links to destination leads or deals.
+4. Optionally turn on automatic sync. The scheduler processes one batch of each selected source type each `all` cycle, starting another pass after the previous pass completes. Site scheduler and background workers must be running. The local development scheduler remains paused.
 5. Disable sync to stop subsequent runs. This does not remove already imported records.
 
 Manual batches run in the request transaction; automatic batches run in the scheduler's background job. A database row lock serializes batches and settings changes until commit. Source mappings, destination changes, logs and the cursor commit together. A failed record rolls back to its savepoint; other records may proceed. Review and failed records are revisited on the next full pass after their underlying problem is resolved. This is periodic reconciliation, not instantaneous event streaming.
 
 ## Data ownership
 
-- Same-site ERPNext **Lead -> CRM Lead** only. There is no remote API connection or reverse write to ERPNext.
+- Same-site ERPNext **Lead -> CRM Lead**, plus separately opt-in **Opportunity -> CRM Deal**. There is no remote API connection or reverse write to ERPNext.
 - Stable source identity is stored in **CRM ERPNext Sync Link** with a unique source Link and unique target Link. Email/phone matches flag potential duplicates; they never merge records.
 - Source creator is explicitly preserved (or translated by the administrator's user map). Existing destination ownership is never reassigned by sync. Changed creators require review. Provenance includes original creator, creation and last synced source modification time; imported CRM timestamps are current.
 - Source status and salesperson populate new leads only. Existing CRM status, salesperson, conversion, follow-ups, appointments and other workflow fields remain under CRM control.
@@ -28,7 +28,7 @@ Manual batches run in the request transaction; automatic batches run in the sche
 
 ## Limits and remaining work
 
-This is the first Lead-only sync release. Opportunities/Deals, organizations as separate records, shared contacts/addresses, custom fields, communication history, attachments and tasks/events are not synced. Source company name is copied into the CRM Lead's text organization field only.
+Lead-based open Opportunities are supported as described below. Customer/Prospect opportunities, closed opportunities, product lines, foreign-currency conversion, organizations as separate records, shared contacts/addresses, custom fields, communication history, attachments and tasks/events remain outside the supported sync scope. Source company name is copied into the CRM Lead's text organization field only.
 
 Duplicate checking currently scans at most 10,000 source and 10,000 target leads. Larger inventories are held for review. Each batch scans that inventory again; large-site optimization is still needed. Run history is administrator-only and currently retains every run (no retention cleanup yet). Failed rows record the exception class rather than arbitrary validation text; diagnosis may require reproducing the validation failure in development. There is no bulk undo of successful runs, force-overwrite button, or automatic conflict resolution.
 
@@ -38,9 +38,41 @@ Read-only preview is still available as documented in [erpnext-migration.md](erp
 
 ```powershell
 docker compose -f docker/local/compose.yaml exec -T backend bash /source/crm/docker/local/test-sync.sh
+# Seed the synthetic Opportunity first as described below.
 node docker/local/sync-browser.cjs
 ```
 
 The backend suite tests reruns, updates and clears, local-edit preservation, conflicts, consent, conversion, duplicate detection, contact-link privacy, agent creator access, record rollback/retry, pagination, disabled scheduling and permissions. Browser checks exercise admin controls, run history, repeated sync, mobile layout and salesperson/agent denial. The browser smoke processes the existing local fixture leads and leaves sync disabled.
 
 Validation completed locally: 13 new sync tests, 12 migration-preview tests, 18 existing agent/appointment tests, 253 frontend tests, frontend build, changed-component lint and browser smoke passed. Automatic scheduler execution with live workers has not been exercised end to end; the scheduler entry point and disabled behavior are covered by integration tests.
+
+
+## Opportunity -> Deal mapping (2026-10-03)
+
+Opportunity sync is **off by default**, including upgrades. Select it explicitly on the sync page or in CRM ERPNext Sync Settings. The global Lead sync switch still controls whether any sync runs; disabling the global switch stops both. Automatic batches include opportunities only while both settings are enabled.
+
+| ERPNext Opportunity | CRM Deal / policy |
+| --- | --- |
+| name | Unique persistent CRM ERPNext Opportunity Link; never matched by email |
+| opportunity_from = Lead, party_name | Reuse the previously synced CRM Lead through its source mapping |
+| owner | Preserve enabled source creator, applying the existing explicit user map |
+| opportunity_owner | Initial deal_owner; requires enabled non-agent System User |
+| Open / Replied / Quotation | Initial Qualification / Qualification / Proposal/Quotation; optional opportunity_status_map JSON override restricted to Open/Ongoing target status types |
+| opportunity_amount | deal_value, with three-way comparison and conflict protection |
+| expected_closing | expected_closure_date, including explicit clears; conflict protection |
+| currency | Must equal CRM base currency (FCRM Settings, fallback USD); exchange rate stays 1 |
+| linked CRM Lead display fields | Initial lead_name, organization_name, first_name, last_name; no organization or contact creation |
+
+CRM retains ongoing control of Deal stage, salesperson, probability, next step, contacts and workflow. ERPNext sales_stage/probability/title are not mapped to those CRM fields. Initial ERPNext creator and timestamps are retained in the mapping; CRM document timestamps reflect actual import time. Both sides changing amount or closing date differently holds the whole Deal update for review.
+
+Distinct opportunities for the same lead create distinct Deals. A pre-existing manual Deal linked to that CRM Lead is a review candidate, not a match to adopt. The duplicate check does not infer identity for unlinked Deals. Missing lead mappings are reviewed and retried on a later pass; source leads are processed first in each batch. Independent Lead and Opportunity cursors persist across batches. If one source type completes before the other, it begins a new pass on the next batch.
+
+Customer/Prospect relationships, product lines, unsupported currencies, terminal ERPNext statuses, terminal CRM Deals, converted CRM leads on initial import, invalid owners, changed relationships and source-lead consent restrictions require review. Unsupported cases do not create partial Deals. A changed source relationship or creator never silently reassigns an existing Deal. Existing mappings can continue normal updates after their linked CRM Lead is converted; conversion itself remains a CRM action.
+
+The existing outbound ERPNext customer-creation integration is checked before saving: if the proposed/current Deal status would trigger it, the row is held for review. Custom CRM hooks still run; staging must validate any site-specific automation. Commission Agents receive no Deal or sync access through this feature, even when their creator identity is preserved.
+
+The browser smoke requires one synthetic Opportunity. Copy `docker/local/seed-opportunity-sync.py` into the local bench as `apps/crm/crm/local_opportunity_seed.py`, then execute `bench --site crm.localhost execute crm.local_opportunity_seed.run`. The helper refuses sites other than muted `crm.localhost`, creates no production connection, and uses an explicit synthetic exchange rate solely to avoid external lookup while preparing the fixture. It does not enable sync. Run `node docker/local/sync-browser.cjs` after deploying the built assets; this checks both opt-in controls and the native Deal link and disables both options afterward.
+
+Eleven Opportunity integration tests cover idempotency, amount/date updates and clears, conflicting CRM edits, multiple opportunities per lead, manual-Deal duplicate review, excluded lifecycle/party/currency/products, changed relationships, outbound-customer automation, record rollback/retry, permissions/agent creator preservation, and independent checkpoints. The existing Lead-sync suite plus a new login-session regression test (14 tests total) and 253 frontend tests also pass, along with UI lint and the frontend build.
+
+Browser verification passed for agent-owned imports, repeat sync without losing the administrator session, native Deal links, mobile layout and salesperson/agent denial. Both sync options were disabled afterward. The source-creator context now preserves the caller's session ID, session data and request arguments on success and failure.

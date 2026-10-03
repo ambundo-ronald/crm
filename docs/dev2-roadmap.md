@@ -180,3 +180,14 @@ Migration preview milestone (2026-10-03): same-site Lead mapping and administrat
 - Sync is disabled by default. Local scheduler remains paused; production remains untouched.
 - Remaining: Opportunity/Deal and relationship/history mapping, large-inventory optimization, run retention, successful-batch undo, real-data staging and deployment/restore validation.
 - Details and local checks: [ERPNext sync](erpnext-sync.md).
+
+
+### 2026-10-03: opt-in Opportunity -> Deal sync
+
+- Added a separate opt-in for open, lead-based ERPNext Opportunities in the CRM base currency.
+- Reuses imported Lead identities, supports multiple Opportunities per Lead, persists independent checkpoints, and exposes native Deal links in run history.
+- Protects CRM Deal stage/assignment and reviews amount/date conflicts, existing manual Deals, unsupported currencies/products/lifecycle, changed relationships and outbound customer-creation hooks.
+- Remaining: Customer/Prospect organization mappings, contact/address relationships, foreign-currency policy, closed-opportunity/history migration, deployment and restore validation.
+- Sync and automatic scheduling remain disabled locally; production is untouched. See [ERPNext sync](erpnext-sync.md).
+
+- Fixed creator-preserving inserts to retain the administrator login session. Validation: 25 sync backend tests, 253 frontend tests, build/lint and the expanded browser smoke passed.

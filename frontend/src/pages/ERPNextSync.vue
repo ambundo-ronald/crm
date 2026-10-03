@@ -1,11 +1,11 @@
-﻿<template>
+<template>
   <div class="h-full overflow-auto p-5 sm:p-8">
     <div class="mx-auto max-w-4xl space-y-5">
       <h1 class="text-2xl font-semibold">{{ __('ERPNext sync') }}</h1>
       <p class="text-ink-gray-6">
         {{
           __(
-            'Bring ERPNext Leads into Frappe CRM on this site. Follow-ups, appointments, CRM status and salesperson changes stay in CRM. Opportunities and contact links are not synced yet.',
+            'Bring ERPNext Leads into Frappe CRM on this site. Follow-ups, appointments, CRM status and salesperson changes stay in CRM. Optional Opportunity sync creates Deals for imported leads. Contact links are not synced yet.',
           )
         }}
       </p>
@@ -22,12 +22,13 @@
             {{
               data.enabled ? __('Lead sync enabled') : __('Lead sync disabled')
             }}
-            · {{ data.linked_leads }} {{ __('linked leads') }}
+            · {{ data.linked_leads }} {{ __('linked leads') }} ·
+            {{ data.linked_deals }} {{ __('linked deals') }}
           </p>
           <p class="text-sm text-ink-gray-6">
             {{
               __(
-                'Each run checks up to 50 leads. Review and failed records are retried on the next full pass. Conflicts never overwrite CRM edits.',
+                'Each run checks up to 50 leads and, when enabled, 50 opportunities. Review and failed records are retried on the next full pass. Conflicts never overwrite CRM edits.',
               )
             }}
           </p>
@@ -51,10 +52,33 @@
               :loading="busy"
               @click="run"
               >{{
-                data.cursor ? __('Sync next batch') : __('Sync now')
+                data.cursor || data.opportunity_cursor
+                  ? __('Sync next batch')
+                  : __('Sync now')
               }}</Button
             >
             <Button :disabled="busy" @click="load">{{ __('Refresh') }}</Button>
+          </div>
+          <div class="space-y-2 border-t border-outline-gray-2 pt-3">
+            <p class="text-sm text-ink-gray-6">
+              {{
+                __(
+                  'Opportunity sync supports open opportunities linked to imported leads, in the CRM base currency. Customer/prospect opportunities, products, other currencies and closed records require review.',
+                )
+              }}
+            </p>
+            <Button :disabled="busy" @click="toggleOpportunities">{{
+              data.sync_opportunities
+                ? __('Disable Opportunity sync')
+                : __('Enable Opportunity sync')
+            }}</Button>
+            <p v-if="data.sync_opportunities && !data.enabled" class="text-sm">
+              {{
+                __(
+                  'Opportunity sync is selected. Enable Lead sync to run both.',
+                )
+              }}
+            </p>
           </div>
           <p v-if="data.automatic" class="text-sm text-ink-gray-6">
             {{
@@ -81,15 +105,26 @@
             {{ item.creation }} · {{ item.summary }}
           </summary>
           <ul class="mt-3 space-y-3 text-sm">
-            <li v-for="row in results(item)" :key="row.source">
+            <li
+              v-for="row in results(item)"
+              :key="(row.source_doctype || 'Lead') + row.source"
+            >
               <span class="font-medium"
                 >{{ row.source }}: {{ row.status }}</span
               >
               <RouterLink
                 v-if="row.target"
-                :to="{ name: 'Lead', params: { leadId: row.target } }"
+                :to="
+                  row.target_doctype === 'CRM Deal'
+                    ? { name: 'Deal', params: { dealId: row.target } }
+                    : { name: 'Lead', params: { leadId: row.target } }
+                "
                 class="ml-2 underline"
-                >{{ __('Open lead') }}</RouterLink
+                >{{
+                  row.target_doctype === 'CRM Deal'
+                    ? __('Open deal')
+                    : __('Open lead')
+                }}</RouterLink
               >
               <p
                 v-if="row.issues?.length"
@@ -146,6 +181,21 @@ async function configure(enabled, automatic) {
   }
 }
 
+async function toggleOpportunities() {
+  busy.value = true
+  error.value = ''
+  try {
+    data.value = await call(api + 'configure_opportunities', {
+      enabled: !data.value.sync_opportunities,
+    })
+  } catch (e) {
+    error.value =
+      e.messages?.join(' ') || e.message || __('Unable to save settings')
+  } finally {
+    busy.value = false
+  }
+}
+
 async function run() {
   busy.value = true
   error.value = ''
@@ -154,7 +204,7 @@ async function run() {
     message.value =
       report.summary +
       (report.has_more
-        ? ' · ' + __('More leads remain. Run the next batch to continue.')
+        ? ' · ' + __('More records remain. Run the next batch to continue.')
         : ' · ' + __('Pass complete.'))
     await load()
   } catch (e) {
