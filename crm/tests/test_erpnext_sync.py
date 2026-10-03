@@ -210,3 +210,20 @@ class TestERPNextSync(IntegrationTestCase):
 		self.assertFalse(status()["enabled"])
 		configure(enabled=True)
 		self.assertTrue(status()["enabled"])
+
+	def test_creator_context_preserves_http_session_on_success_and_failure(self):
+		from crm.migration.sync import creator_context
+
+		frappe.local.session.sid = "synthetic-authenticated-session"
+		frappe.local.session.data = frappe._dict({"csrf_token": "synthetic-csrf-token"})
+		frappe.local.form_dict = frappe._dict({"cmd": "crm.migration.sync.sync_now"})
+		original = frappe.local.session.copy()
+		form = frappe.local.form_dict
+		with creator_context("Guest"):
+			self.assertEqual(frappe.session.user, "Guest")
+		self.assertEqual(frappe.local.session, original)
+		self.assertIs(frappe.local.form_dict, form)
+		with self.assertRaises(ValueError), creator_context("Guest"):
+			raise ValueError("Synthetic insert failure")
+		self.assertEqual(frappe.local.session, original)
+		self.assertIs(frappe.local.form_dict, form)

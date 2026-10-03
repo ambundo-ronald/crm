@@ -1,0 +1,94 @@
+{
+ "doctype": "DocType",
+ "name": "CRM ERPNext Opportunity Link",
+ "module": "FCRM",
+ "engine": "InnoDB",
+ "issingle": 0,
+ "autoname": "hash",
+ "field_order": [
+  "source_doctype",
+  "source_name",
+  "target_name",
+  "source_snapshot",
+  "target_snapshot",
+  "source_creator",
+  "source_created",
+  "source_modified",
+  "source_party",
+  "target_lead"
+ ],
+ "fields": [
+  {
+   "fieldname": "source_doctype",
+   "label": "Source DocType",
+   "fieldtype": "Link",
+   "options": "DocType",
+   "default": "Opportunity",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_name",
+   "label": "Source Name",
+   "fieldtype": "Dynamic Link",
+   "options": "source_doctype",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_name",
+   "label": "Target Name",
+   "fieldtype": "Link",
+   "options": "CRM Deal",
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_snapshot",
+   "label": "Source Snapshot",
+   "fieldtype": "Long Text",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_snapshot",
+   "label": "Target Snapshot",
+   "fieldtype": "Long Text",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_creator",
+   "label": "Source Creator",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "source_created",
+   "label": "Source Created",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "source_modified",
+   "label": "Source Modified",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "source_party",
+   "label": "Original Source Lead",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "target_lead",
+   "label": "Linked CRM Lead",
+   "fieldtype": "Link",
+   "options": "CRM Lead"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -1,7 +1,8 @@
-"""Opt-in, same-site ERPNext Lead sync. Transactions belong to the caller/job."""
+"""Opt-in, same-site ERPNext Lead and Opportunity sync. Transactions belong to the caller/job."""
 
 import json
 from collections import Counter
+from contextlib import contextmanager
 
 import frappe
 from frappe.utils import now_datetime
@@ -46,6 +47,9 @@ def status():
 		"cursor": settings.cursor,
 		"last_run": settings.last_run,
 		"linked_leads": frappe.db.count(LINK),
+		"linked_deals": frappe.db.count("CRM ERPNext Opportunity Link"),
+		"sync_opportunities": settings.sync_opportunities,
+		"opportunity_cursor": settings.opportunity_cursor,
 		"runs": frappe.get_all(
 			RUN,
 			fields=["name", "creation", "summary", "results"],
@@ -62,6 +66,16 @@ def configure(enabled: bool = False, automatic: bool = False):
 	settings = frappe.get_single(SETTINGS)
 	settings.enabled = int(enabled)
 	settings.automatic = int(automatic) if enabled else 0
+	settings.save()
+	return status()
+
+
+@frappe.whitelist(methods=["POST"])
+def configure_opportunities(enabled: bool = False):
+	require_admin()
+	_lock()
+	settings = frappe.get_single(SETTINGS)
+	settings.sync_opportunities = int(enabled)
 	settings.save()
 	return status()
 
@@ -112,7 +126,16 @@ def run_batch(automatic=False):
 			frappe.db.rollback(save_point="sync_record")
 			# Log exception class only; custom validators may embed sensitive data.
 			result = {"status": "Failed", "issues": [type(exc).__name__]}
-		results.append({"source": source_name, **result})
+		results.append(
+			{"source": source_name, "source_doctype": "Lead", "target_doctype": "CRM Lead", **result}
+		)
+	opportunities = {"has_more": False, "next_after": settings.opportunity_cursor}
+	if settings.sync_opportunities:
+		from crm.migration.opportunity import sync_batch
+
+		opportunities = sync_batch(settings)
+		results.extend(opportunities["results"])
+	has_more = report["has_more"] or opportunities["has_more"]
 	counts = Counter(row["status"] for row in results)
 	run = frappe.get_doc(
 		{
@@ -121,11 +144,38 @@ def run_batch(automatic=False):
 			or "No source leads",
 			"results": json.dumps(results),
 			"next_cursor": report["next_after"],
-			"has_more": report["has_more"],
+			"has_more": has_more,
 		}
 	).insert(ignore_permissions=True)
-	frappe.db.set_single_value(SETTINGS, {"cursor": report["next_after"] or "", "last_run": now_datetime()})
-	return {"run": run.name, "results": results, "has_more": report["has_more"], "summary": run.summary}
+	frappe.db.set_single_value(
+		SETTINGS,
+		{
+			"cursor": report["next_after"] or "",
+			"opportunity_cursor": opportunities["next_after"] or "",
+			"last_run": now_datetime(),
+		},
+	)
+	return {"run": run.name, "results": results, "has_more": has_more, "summary": run.summary}
+
+
+@contextmanager
+def creator_context(creator):
+	"""Preserve the authenticated HTTP session while Frappe sets insert ownership."""
+	if creator == frappe.session.user:
+		yield
+		return
+	session = frappe.local.session.copy()
+	form_dict = frappe.local.form_dict
+	try:
+		frappe.set_user(creator)
+		yield
+	finally:
+		frappe.set_user(session["user"])
+		# set_user resets sid/data as well as user. Restoring just the username
+		# would invalidate the caller's cookie on the next browser request.
+		frappe.local.session.clear()
+		frappe.local.session.update(session)
+		frappe.local.form_dict = form_dict
 
 
 def _apply(proposal):
@@ -145,14 +195,10 @@ def _apply(proposal):
 	if not link:
 		# Frappe v16 takes owner from the session on insert. Use the explicitly
 		# validated creator only for this insert, restoring the admin in all cases.
-		actor = frappe.session.user
-		try:
-			frappe.set_user(proposal["proposed_creator"])
+		with creator_context(proposal["proposed_creator"]):
 			target = frappe.get_doc({"doctype": "CRM Lead", **proposal["proposed_fields"]}).insert(
 				ignore_permissions=True
 			)
-		finally:
-			frappe.set_user(actor)
 		frappe.get_doc(
 			{
 				"doctype": LINK,

@@ -11,7 +11,10 @@
   "status_map",
   "user_map",
   "cursor",
-  "last_run"
+  "last_run",
+  "sync_opportunities",
+  "opportunity_status_map",
+  "opportunity_cursor"
  ],
  "fields": [
   {
@@ -52,6 +55,26 @@
    "fieldname": "last_run",
    "label": "Last Run",
    "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sync_opportunities",
+   "label": "Sync Opportunities",
+   "fieldtype": "Check",
+   "default": "0",
+   "description": "Opt in to lead-based Opportunity to Deal sync. Unsupported relationships and currencies require review."
+  },
+  {
+   "fieldname": "opportunity_status_map",
+   "label": "Opportunity Status Map",
+   "fieldtype": "Code",
+   "options": "JSON",
+   "default": "{}"
+  },
+  {
+   "fieldname": "opportunity_cursor",
+   "label": "Opportunity Cursor",
+   "fieldtype": "Data",
    "read_only": 1
   }
  ],
