@@ -44,3 +44,10 @@ currently have Sales User, not the future Commission Agent role.
 The running web log is /workspace/dev2-web.log inside the backend container.
 
 The Commission Agent workspace is now available at /crm-agent. See [agent setup and checks](../../docs/commission-agents.md) for synthetic agent accounts and test commands.
+
+
+## Migration extensions and restore validation
+
+Prospect, additional Address, source-history and custom-field review are available at `/crm/erpnext-sync`. Run `bash /source/crm/docker/local/test-sync.sh` in the backend container for the focused migration suite. Synthetic extension fixtures and browser usage are documented in [staging validation](../../docs/staging-validation.md).
+
+The local restore rehearsal refuses to overwrite an existing `crm-restore.localhost` site. That restored site now exists, with mail muted, scheduler paused and sync disabled. Its temporary HTTP validation server does not remain running. Backups and configuration secrets live only in the Docker volume under `/workspace/dev2-restore-evidence`; never add them to Git.

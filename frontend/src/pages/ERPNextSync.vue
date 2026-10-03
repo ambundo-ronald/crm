@@ -53,7 +53,10 @@
               :loading="busy"
               @click="run"
               >{{
-                data.cursor || data.opportunity_cursor || data.customer_cursor
+                data.cursor ||
+                data.opportunity_cursor ||
+                data.customer_cursor ||
+                data.prospect_cursor
                   ? __('Sync next batch')
                   : __('Sync now')
               }}</Button
@@ -64,7 +67,7 @@
             <p class="text-sm text-ink-gray-6">
               {{
                 __(
-                  'Opportunity sync supports open opportunities linked to imported leads or business customers, in the CRM base currency. Prospects, products, other currencies and closed records require review.',
+                  'Opportunity sync supports open opportunities linked to imported leads or business customers or prospects, in the CRM base currency. Products, other currencies and closed records require review.',
                 )
               }}
             </p>
@@ -116,6 +119,23 @@
                 : __('Enable primary Address sync')
             }}</Button>
           </div>
+          <div class="space-y-2 border-t border-outline-gray-2 pt-3">
+            <p class="text-sm text-ink-gray-6">
+              {{
+                __(
+                  'Prospect sync creates Organizations for companies and supports their Opportunities. Matching Customers or existing Organizations require review. Lead relationships and salesperson assignments are not changed.',
+                )
+              }}
+            </p>
+            <Button :disabled="busy" @click="toggleProspects">{{
+              data.sync_prospects
+                ? __('Disable Prospect sync')
+                : __('Enable Prospect sync')
+            }}</Button>
+            <p v-if="data.sync_prospects && !data.enabled" class="text-sm">
+              {{ __('Enable Lead sync to run selected types.') }}
+            </p>
+          </div>
           <p v-if="data.automatic" class="text-sm text-ink-gray-6">
             {{
               __(
@@ -129,6 +149,8 @@
         </div>
         <p v-if="message" role="status">{{ message }}</p>
         <ERPNextContactReview v-if="data.available" @changed="load" />
+        <ERPNextAddressReview v-if="data.available" @changed="load" />
+        <ERPNextExtensions v-if="data.available" @changed="load" />
         <h2 class="text-lg font-semibold">{{ __('Recent runs') }}</h2>
         <p v-if="!data.runs.length" class="text-ink-gray-6">
           {{ __('No sync runs yet.') }}
@@ -149,8 +171,14 @@
               <span class="font-medium"
                 >{{ row.source }}: {{ row.status }}</span
               >
+              <a
+                v-if="row.target && row.target_doctype === 'Address'"
+                :href="'/app/address/' + encodeURIComponent(row.target)"
+                class="ml-2 underline"
+                >{{ __('Open address') }}</a
+              >
               <RouterLink
-                v-if="row.target"
+                v-else-if="row.target"
                 :to="targetRoute(row)"
                 class="ml-2 underline"
                 >{{
@@ -179,6 +207,8 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import ERPNextExtensions from '@/components/ERPNextExtensions.vue'
+import ERPNextAddressReview from '@/components/ERPNextAddressReview.vue'
 import ERPNextContactReview from '@/components/ERPNextContactReview.vue'
 import { Button, call } from 'frappe-ui'
 
@@ -250,6 +280,21 @@ async function toggleCustomerAddresses() {
   try {
     data.value = await call(api + 'configure_customer_addresses', {
       enabled: !data.value.sync_customer_addresses,
+    })
+  } catch (e) {
+    error.value =
+      e.messages?.join(' ') || e.message || __('Unable to save settings')
+  } finally {
+    busy.value = false
+  }
+}
+
+async function toggleProspects() {
+  busy.value = true
+  error.value = ''
+  try {
+    data.value = await call(api + 'configure_prospects', {
+      enabled: !data.value.sync_prospects,
     })
   } catch (e) {
     error.value =

@@ -108,3 +108,6 @@ Docker Desktop started. Isolated crm-dev2 database and Redis are healthy; Bench 
 - Production was never accessed. Separate staging and backup restore remain pending.
 
 Agent milestone: nine focused backend tests, session/API-token isolation checks, a headless Edge lead/contact/follow-up workflow and staff smoke checks passed locally. See [agent validation](commission-agents.md). The broader Lead fixture failure and production/staging release gates remain open.
+
+
+Local recovery rehearsal (2026-10-04): completed a fresh-site database/public/private-file restore into `crm-restore.localhost`, with matching snapshots for 20 business/mapping/history tables, five matching file hashes, and successful restored HTTP login/private-file/agent permission checks. See [staging validation evidence](staging-validation.md). This closes the local restore-mechanics check only; separate Cloud staging, exact production patch/custom-app matching and scheduler-worker acceptance remain pending.

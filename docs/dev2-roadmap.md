@@ -210,3 +210,17 @@ Migration preview milestone (2026-10-03): same-site Lead mapping and administrat
 - Preserves existing CRM address choices, reviews invalid relationships and conflicting changes, and retains comparison history while disabled.
 - Validation: 41 sync backend tests, 253 frontend tests, lint/build and expanded Customer/Contact browser smoke passed. No new agent Address/Organization access.
 - Remaining: Prospect/individual relationships, additional Address mappings, history/custom fields, currency/lifecycle policy and separate staging/restore validation. Production unchanged; local sync disabled.
+
+
+### 2026-10-04: Prospect, additional Address and migration review extensions
+
+- Added default-off Prospect -> Organization batches and Prospect Opportunity relationships, with cross-Customer/Prospect duplicate review.
+- Added individual additional Address link review, auditing and exact-link reversal; existing primary Address behavior remains separate.
+- Added an administrator-only original-history view for comments, notes, communications, files, tasks and events. It preserves source ownership/privacy and does not copy entries into CRM timelines.
+- Added custom-field inventory and per-record preview/apply for explicitly selected compatible scalar fields; field snapshots, stale-review rejection and conflict protection are persisted. No scheduled custom-field sync or automatic schema creation.
+- Added read-only staging evidence at `crm.migration.validation.report` and an isolated local restore rehearsal script. User confirmed that separate Cloud staging does not exist; Cloud/production validation is still pending.
+- Validation: 56 sync backend tests, 253 frontend tests, frontend lint/build and migration-extension browser workflow passed. See [staging validation](staging-validation.md) for restore evidence and remaining release gates.
+- Remaining: production-specific field selection, rich/link/table custom mappings, individual Customers, foreign currency/products/closed lifecycle, broader timeline/history import, representative Cloud staging, scheduler-worker validation and production rollout.
+
+
+Local restore evidence (2026-10-04): backup/database/public/private files restored into a new isolated local site; all 20 selected document-table hashes and five file hashes match. HTTP login, private-file restrictions and restored agent access pass. Full focused regression result: 74 backend tests and 253 frontend tests pass. Separate Cloud staging still does not exist; production release gates remain open.

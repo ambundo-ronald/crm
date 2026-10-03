@@ -1,0 +1,63 @@
+const { chromium, expect } = require('@playwright/test')
+;(async () => {
+  const browser = await chromium.launch({ channel: 'msedge', headless: true })
+  let context
+  try {
+    context = await browser.newContext({ baseURL: 'http://127.0.0.1:18000', viewport: { width: 1440, height: 1000 } })
+    await context.addInitScript(() => localStorage.setItem('crm_persona_captured', '1'))
+    expect((await context.request.post('/api/method/login', { form: { usr: 'Administrator', pwd: 'Local-Dev2-Only-2026' } })).status()).toBe(200)
+    const page = await context.newPage(), errors = []
+    page.on('pageerror', error => errors.push(error.message))
+    await page.goto('/crm/erpnext-sync')
+    const onboarding = page.locator('div.fixed.z-50.right-0.w-80')
+    if (await onboarding.isVisible()) await onboarding.locator(':scope > div').first().getByRole('button').last().click()
+    if (await page.getByRole('button', { name: 'Enable Prospect sync', exact: true }).isVisible()) await page.getByRole('button', { name: 'Enable Prospect sync', exact: true }).click()
+    if (await page.getByRole('button', { name: 'Enable Lead sync', exact: true }).isVisible()) await page.getByRole('button', { name: 'Enable Lead sync', exact: true }).click()
+    await page.getByRole('button', { name: 'Sync now', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Sync now', exact: true })).toBeEnabled({ timeout: 30000 })
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await page.getByRole('button', { name: 'Review address links', exact: true }).click()
+    const card = page.locator('article[data-source-type="Prospect"]').filter({ hasText: 'Dev2 Additional Browser Address' })
+    for (let i = 0; i < 20; i++) {
+      await expect(page.getByRole('button', { name: 'Review address links', exact: true })).toBeEnabled()
+      if (await card.count()) break
+      await page.getByRole('button', { name: 'Next address page', exact: true }).click()
+    }
+    await card.getByRole('button', { name: 'Link address', exact: true }).click()
+    await expect(card).toContainText('Already linked through this review')
+    await page.getByRole('button', { name: 'Show managed address links', exact: true }).click()
+    const managed = page.locator('[data-managed-address]').filter({ hasText: 'Dev2 Additional Browser Address' })
+    await managed.getByRole('button', { name: 'Remove CRM address link', exact: true }).click()
+    await expect(managed).toHaveCount(0)
+    await page.getByLabel('Source type', { exact: true }).selectOption('Prospect')
+    await page.getByLabel('ERPNext record ID', { exact: true }).fill('Dev2 Prospect Browser Company')
+    await page.getByRole('button', { name: 'View source history', exact: true }).click()
+    await expect(page.getByText('Historical Prospect browser note', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Inspect custom fields', exact: true }).click()
+    await page.getByLabel('Field mapping JSON: source field to destination field', { exact: true }).fill('{"custom_dev2_demo_reference":"custom_dev2_demo_reference"}')
+    await page.getByRole('button', { name: 'Preview custom field changes', exact: true }).click()
+    await page.getByRole('button', { name: 'Apply reviewed custom fields', exact: true }).click()
+    await expect(page.getByText('Reviewed custom fields applied. Source data was preserved.', { exact: true })).toBeVisible()
+    const report = await context.request.get('/api/method/crm.migration.validation.report')
+    expect(report.status()).toBe(200)
+    expect((await report.json()).message.ready_for_production).toBe(false)
+    const agent = await browser.newContext({ baseURL: 'http://127.0.0.1:18000' })
+    await agent.request.post('/api/method/login', { form: { usr: 'dev2.agent.a@example.invalid', pwd: 'Local-Dev2-Only-2026' } })
+    for (const method of ['crm.migration.validation.report', 'crm.migration.addresses.preview_address_links', 'crm.migration.extensions.field_inventory', 'crm.migration.extensions.source_history']) expect((await agent.request.get('/api/method/' + method)).status()).toBe(403)
+    await agent.close()
+    await page.getByRole('button', { name: 'Disable Prospect sync', exact: true }).click()
+    await page.getByRole('button', { name: 'Disable sync', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Enable Lead sync', exact: true })).toBeVisible()
+    await page.screenshot({ path: 'test-results/migration-extensions.png', fullPage: true })
+    await page.setViewportSize({ width: 390, height: 844 })
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    expect(errors).toEqual([])
+    console.log('PASS: Prospect opt-in, additional Address review/reversal, source history, custom-field preview/apply, agent denial and mobile layout; sync disabled')
+  } finally {
+    if (context) {
+      await context.request.post('/api/method/crm.migration.sync.configure', { data: { enabled: false, automatic: false } }).catch(() => {})
+      await context.request.post('/api/method/crm.migration.sync.configure_prospects', { data: { enabled: false } }).catch(() => {})
+    }
+    await browser.close()
+  }
+})().catch(error => { console.error(error); process.exitCode = 1 })

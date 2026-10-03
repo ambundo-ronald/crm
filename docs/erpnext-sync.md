@@ -7,7 +7,7 @@ Implemented locally on dev2 (2026-10-03). Production has not been accessed or co
 Open **ERPNext sync** in the CRM sidebar as Administrator or System Manager, or visit `/crm/erpnext-sync`.
 
 1. Review the source data and the status/user mappings in **CRM ERPNext Sync Settings**. Empty maps use the proposed defaults in [erpnext-migration.md](erpnext-migration.md). User mapping changes can grant agent access, so map actual creators deliberately.
-2. Enable Lead sync. Optionally enable **Customer sync** and **Opportunity sync**, then click **Sync now**. Each request processes up to 50 Leads, 50 selected Customers, and 50 selected Opportunities, in that order. **Sync next batch** continues a larger inventory.
+2. Enable Lead sync. Optionally enable **Customer sync**, **Prospect sync** and **Opportunity sync**, then click **Sync now**. Each request processes up to 50 Leads, 50 selected Customers, 50 selected Prospects, and 50 selected Opportunities, in that order. **Sync next batch** continues a larger inventory.
 3. Expand a run to see Created, Updated, Unchanged, Review, or Failed results and links to destination Leads, Organizations or Deals.
 4. Optionally turn on automatic sync. The scheduler processes one batch of each selected source type each `all` cycle, starting another pass after the previous pass completes. Site scheduler and background workers must be running. The local development scheduler remains paused.
 5. Disable sync to stop subsequent runs. This does not remove already imported records.
@@ -16,7 +16,7 @@ Manual batches run in the request transaction; automatic batches run in the sche
 
 ## Data ownership
 
-- Same-site ERPNext **Lead -> CRM Lead**, plus separately opt-in **Opportunity -> CRM Deal**. There is no remote API connection. Lead, Customer and Opportunity source fields are not updated. Individually approved Contact links deliberately update the shared Contact relationship table, as described below.
+- Same-site ERPNext **Lead -> CRM Lead**, plus separately opt-in **Opportunity -> CRM Deal**. There is no remote API connection. Lead, Customer, Prospect and Opportunity source fields are not updated. Individually approved Contact/Address links deliberately update shared relationship tables, as described below.
 - Stable source identity is stored in **CRM ERPNext Sync Link** with a unique source Link and unique target Link. Email/phone matches flag potential duplicates; they never merge records.
 - Source creator is explicitly preserved (or translated by the administrator's user map). Existing destination ownership is never reassigned by sync. Changed creators require review. Provenance includes original creator, creation and last synced source modification time; imported CRM timestamps are current.
 - Source status and salesperson populate new leads only. Existing CRM status, salesperson, conversion, follow-ups, appointments and other workflow fields remain under CRM control.
@@ -28,11 +28,11 @@ Manual batches run in the request transaction; automatic batches run in the sche
 
 ## Limits and remaining work
 
-Open Lead-based and mapped business-Customer Opportunities are supported. Prospect and individual-Customer relationships, closed opportunities, product lines, foreign-currency conversion, additional/non-Customer addresses, custom fields, communication history, attachments and tasks/events remain outside the supported sync scope. Lead company name remains a text field; separate Organizations are created only by opt-in business-Customer sync.
+Open Lead-based and mapped business-Customer/Prospect Opportunities are supported. Individual-Customer relationships, closed opportunities, product lines and foreign-currency conversion remain outside the supported batch-sync scope. Additional Address relationships and compatible custom fields now have manual review workflows. Original history can be inspected without copying activities or attachments. Lead company name remains a text field; separate Organizations are created by opt-in business-Customer or Prospect sync.
 
 Duplicate checking currently scans at most 10,000 source and 10,000 target leads. Larger inventories are held for review. Each batch scans that inventory again; large-site optimization is still needed. Run history is administrator-only and currently retains every run (no retention cleanup yet). Failed rows record the exception class rather than arbitrary validation text; diagnosis may require reproducing the validation failure in development. There is no bulk undo of successful runs, force-overwrite button, or automatic conflict resolution.
 
-Read-only preview is still available as documented in [erpnext-migration.md](erpnext-migration.md). Separate staging, production field mapping, restore checks and wider deployment validation remain outstanding.
+Read-only preview is still available as documented in [erpnext-migration.md](erpnext-migration.md). Separate Cloud staging, production field mapping and wider deployment validation remain outstanding; the local restore rehearsal is documented separately.
 
 ## Local checks
 
@@ -68,7 +68,7 @@ CRM retains ongoing control of Deal stage, salesperson, probability, next step, 
 
 Distinct opportunities for the same lead create distinct Deals. A pre-existing manual Deal linked to that CRM Lead is a review candidate, not a match to adopt. The duplicate check does not infer identity for unlinked Deals. Missing lead mappings are reviewed and retried on a later pass; source leads are processed first in each batch. Independent Lead and Opportunity cursors persist across batches. If one source type completes before the other, it begins a new pass on the next batch.
 
-Unmapped/ineligible Customer and Prospect relationships, product lines, unsupported currencies, terminal ERPNext statuses, terminal CRM Deals, converted CRM leads on initial import, invalid owners, changed relationships and source-lead consent restrictions require review. Unsupported cases do not create partial Deals. A changed source relationship or creator never silently reassigns an existing Deal. Existing mappings can continue normal updates after their linked CRM Lead is converted; conversion itself remains a CRM action.
+Unmapped/ineligible Customer or Prospect relationships, product lines, unsupported currencies, terminal ERPNext statuses, terminal CRM Deals, converted CRM leads on initial import, invalid owners, changed relationships and source-lead consent restrictions require review. Unsupported cases do not create partial Deals. A changed source relationship or creator never silently reassigns an existing Deal. Existing mappings can continue normal updates after their linked CRM Lead is converted; conversion itself remains a CRM action.
 
 The existing outbound ERPNext customer-creation integration is checked before saving: if the proposed/current Deal status would trigger it, the row is held for review. Custom CRM hooks still run; staging must validate any site-specific automation. Commission Agents receive no Deal or sync access through this feature, even when their creator identity is preserved.
 
@@ -100,6 +100,31 @@ Local browser verification covered Customer opt-in, native Organization links, e
 
 The Organization's `address` points to that existing record. No Address is copied, modified, deleted or given additional Dynamic Links. Address details therefore remain shared: authorized staff editing the Address will change the same record ERPNext uses. Commission agents gain no Address or Organization access.
 
-The first opt-in refuses to overwrite an existing different CRM address, including when the source has no primary address. Later source changes and clears use three-way comparison; conflicting CRM choices hold the entire Customer update. Disabling this option leaves existing references and comparison snapshots intact, so re-enabling it cannot silently overwrite intervening CRM edits. Clearing a source reference clears the Organization reference only when safe; the shared Address remains intact. Additional billing/shipping addresses and Lead/Prospect addresses remain outside this slice.
+The first opt-in refuses to overwrite an existing different CRM address, including when the source has no primary address. Later source changes and clears use three-way comparison; conflicting CRM choices hold the entire Customer update. Disabling this option leaves existing references and comparison snapshots intact, so re-enabling it cannot silently overwrite intervening CRM edits. Clearing a source reference clears the Organization reference only when safe; the shared Address remains intact. Additional billing/shipping addresses and Lead/Prospect addresses use the separate reviewed-link workflow below.
 
 Validation: 41 sync backend tests (including five primary Address tests), 253 frontend tests, lint and production build passed. Browser smoke verifies the opt-in controls and agent denial alongside Customer/Contact workflows. Automatic worker execution and production staging remain outstanding.
+
+
+## Prospect Organizations and additional Addresses (2026-10-04)
+
+Prospect sync is a separate, default-off option. It maps `company_name` and `website` to an Organization, preserves creator provenance, and maintains its own cursor and unique source mapping. It does not change a Prospect's linked Leads, salesperson, industry, territory, revenue or lifecycle. Name matches across Customers, Prospects or existing Organizations are held for review, including before either ERPNext party is imported. This deliberately does not infer that a Prospect and Customer with the same name should merge.
+
+Open Prospect Opportunities reuse their mapped Organization with the existing amount/date conflict, currency, lifecycle and outbound-automation safeguards. Prospect Contacts participate in the same individual Contact review as Lead and Customer Contacts.
+
+**Review address links** inventories existing Address relationships to mapped Leads, Customers and Prospects. Approve each proposed CRM link separately. Only that Dynamic Link and Address modification metadata change: address details, primary/shipping flags and original ERPNext links remain intact. This does not select or replace the Organization's primary Address. The CRM Organization side panel still shows its primary Address; additional relationships can be inspected through the Address records and this review panel.
+
+Disabled Addresses, restricted source lifecycle and changed source creators require review. Stale previews are rejected. **Show managed address links** permits removal of only the exact child row created by this workflow, even if the source ERPNext relationship was subsequently removed. Pre-existing links are not adopted; changed child rows are not deleted. Source unlinking does not automatically revoke a reviewed CRM link. Commission agents gain no Address or Organization access.
+
+## Source history and reviewed custom fields
+
+The administrator-only **Source history and custom fields** panel accepts an already-synced ERPNext type and record ID. History is a live, read-only view of original Comments, CRM Notes, Communications, Files, ToDos and Events directly associated with that source. Original authors and timestamps are retained; records are never moved, re-created, rescheduled or sent. Read access is checked on both source and target and on each non-child history document. Content is rendered as escaped plain text, limited to 20,000 characters per entry. Pages contain up to 50 records.
+
+File entries open the protected source File record; this endpoint does not issue download URLs or change file privacy. Attachments referenced indirectly by an email/comment remain accessible through that original record, rather than being copied to the CRM record. Version/change logs and arbitrary custom activity types are not included. These history entries are not added to the normal CRM timeline or made available to commission agents. Deleting the original history removes it from this live view; a tested backup remains necessary for archival retention.
+
+Choose **Inspect custom fields**, then provide a JSON object mapping source custom field names to destination custom field names. Destination fields must already exist. **Preview custom field changes** shows values, planned changes and conflicts; **Apply reviewed custom fields** applies the reviewed record atomically and records its fields in sync run history. This is an explicit per-record action, not an automatic background custom-field sync.
+
+Supported matching types: Data, Small Text, Text, Long Text, Check, Int, Float, Date, Datetime and Select. Hidden, restricted, read-only, fetched, virtual and unique fields are excluded, as are standard workflow fields, Link/Table/Attach/Password/Code/HTML/Text Editor/Currency fields. Select values must exist in the destination options. Existing nonempty values (including numeric defaults) require alignment/review before first import. Changed source-field identities, stale previews and simultaneous CRM edits block the whole apply; clears and unchanged-source preservation use saved per-field snapshots. Omitted fields retain their snapshots for later reviews.
+
+Normal target validations/custom hooks still run. Known outbound Deal customer-creation triggers are held for review; staging must inspect all site-specific automation. Real production field mappings remain to be supplied and validated against the production customizations. No production schema or data has been modified.
+
+Validation for these extensions: 56 sync backend tests and 253 frontend tests passed, plus UI lint/build and an Edge browser workflow covering Prospect sync, Address approval/reversal, source history, custom-field apply, agent denial and mobile layout. The browser test disables global/Prospect sync on completion or failure. See [staging validation and restore](staging-validation.md) for remaining release gates.
