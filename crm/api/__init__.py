@@ -53,6 +53,11 @@ def get_user_signature():
 
 
 def check_app_permission():
+	from crm.permissions.commission_agent import is_agent
+
+	if is_agent():
+		return True
+
 	if frappe.session.user == "Administrator":
 		return True
 

@@ -401,7 +401,12 @@ ignore_links_on_delete = ["Failed Lead Sync Log"]
 # "crm.auth.validate"
 # ]
 
+role_home_page = {"Commission Agent": "crm-agent"}
+
+auth_hooks = ["crm.permissions.commission_agent.restrict_request"]
+
 after_migrate = [
+	"crm.permissions.commission_agent.install_role",
 	"crm.fcrm.doctype.fcrm_settings.fcrm_settings.after_migrate",
 	"crm.api.whatsapp.add_roles",
 	"crm.domain_enrichment.install.seed_default_rules_and_mappings",

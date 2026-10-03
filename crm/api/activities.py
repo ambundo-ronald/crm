@@ -306,6 +306,7 @@ def get_lead_activities(name: str):
 	notes = get_linked_notes(name) + get_linked_calls(name).get("notes", [])
 	tasks = get_linked_tasks(name) + get_linked_calls(name).get("tasks", [])
 	attachments = get_attachments("CRM Lead", name)
+	activities.extend(get_linked_appointments(name))
 
 	activities.sort(key=lambda x: x["creation"], reverse=True)
 	activities = handle_multiple_versions(activities)
@@ -534,3 +535,39 @@ def parse_attachment_log(html: str, type: str):
 
 def is_translatable(doctype: str) -> bool:
 	return doctype in get_translated_doctypes()
+
+
+def get_linked_appointments(lead: str):
+	"""Read current linked Events, including appointments created before this lead.
+
+	Do not manufacture Communications or comments: existing Events appear without a
+	backfill, and rescheduling/completion updates one card instead of duplicating it.
+	Both lead access and Event list/document permissions must hold.
+	"""
+	if not frappe.has_permission("CRM Lead", "read", lead):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+	if not frappe.has_permission("Event", "read"):
+		return []
+	events = frappe.get_list(
+		"Event",
+		filters={"reference_doctype": "CRM Lead", "reference_docname": lead},
+		fields=["name", "subject", "starts_on", "ends_on", "location", "status", "creation", "owner"],
+		order_by="creation desc",
+		limit_page_length=0,
+	)
+	timezone = frappe.utils.get_system_timezone()
+	return [
+		{
+			"name": event.name,
+			"activity_type": "appointment",
+			"creation": event.creation,
+			"owner": event.owner,
+			"is_lead": True,
+			"data": {
+				field: event.get(field) for field in ("subject", "starts_on", "ends_on", "location", "status")
+			}
+			| {"time_zone": timezone},
+		}
+		for event in events
+		if frappe.has_permission("Event", "read", event.name)
+	]

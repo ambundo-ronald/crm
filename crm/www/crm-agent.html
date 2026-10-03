@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="{{ csrf_token | e }}" />
+    <meta name="site-timezone" content="{{ time_zone | e }}" />
+    <title>My leads | CRM</title>
+    <link rel="stylesheet" href="/assets/crm/css/agent.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <strong>CRM · Agent workspace</strong>
+        <p>{{ agent_name | e }}</p>
+      </div>
+      <button id="logout">Sign out</button>
+    </header>
+    <main>
+      <p id="message" role="status" aria-live="polite"></p>
+      <nav>
+        <button id="new-meeting">Book meeting (no lead)</button>
+        <button id="calendar-tab">My calendar</button>
+        <button id="leads-tab">My leads</button
+        ><button id="contacts-tab">My contacts</button
+        ><button id="new-lead">New lead</button
+        ><button id="new-contact">New contact</button>
+      </nav>
+      <div class="workspace">
+        <section aria-label="Records">
+          <h1 id="list-title">My leads</h1>
+          <form id="search-form">
+            <label
+              >Find a lead<input
+                id="search"
+                maxlength="100"
+                placeholder="Lead name" /></label
+            ><button>Search</button>
+          </form>
+          <div id="records"></div>
+          <div class="paging">
+            <button id="previous">Previous</button
+            ><button id="next">Next</button>
+          </div>
+        </section>
+        <section id="detail" aria-label="Record details">
+          <p>Select a lead to see contacts and follow-ups.</p>
+        </section>
+      </div>
+    </main>
+    <dialog id="editor">
+      <form id="edit-form">
+        <h2 id="editor-title"></h2>
+        <p id="editor-error" role="alert" class="error"></p>
+        <div id="editor-fields"></div>
+        <div class="actions">
+          <button type="button" id="cancel">Cancel</button
+          ><button id="save" type="submit">Save</button>
+        </div>
+      </form>
+    </dialog>
+    <script src="/assets/crm/js/agent.js" defer></script>
+  </body>
+</html>
