@@ -49,6 +49,7 @@ def status():
 		"linked_leads": frappe.db.count(LINK),
 		"linked_organizations": frappe.db.count("CRM ERPNext Customer Link"),
 		"sync_customers": settings.sync_customers,
+		"sync_customer_addresses": settings.sync_customer_addresses,
 		"customer_cursor": settings.customer_cursor,
 		"linked_deals": frappe.db.count("CRM ERPNext Opportunity Link"),
 		"sync_opportunities": settings.sync_opportunities,
@@ -89,6 +90,16 @@ def configure_customers(enabled: bool = False):
 	_lock()
 	settings = frappe.get_single(SETTINGS)
 	settings.sync_customers = int(enabled)
+	settings.save()
+	return status()
+
+
+@frappe.whitelist(methods=["POST"])
+def configure_customer_addresses(enabled: bool = False):
+	require_admin()
+	_lock()
+	settings = frappe.get_single(SETTINGS)
+	settings.sync_customer_addresses = int(enabled)
 	settings.save()
 	return status()
 

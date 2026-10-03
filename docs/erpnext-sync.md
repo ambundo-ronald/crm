@@ -28,7 +28,7 @@ Manual batches run in the request transaction; automatic batches run in the sche
 
 ## Limits and remaining work
 
-Open Lead-based and mapped business-Customer Opportunities are supported. Prospect and individual-Customer relationships, closed opportunities, product lines, foreign-currency conversion, addresses, custom fields, communication history, attachments and tasks/events remain outside the supported sync scope. Lead company name remains a text field; separate Organizations are created only by opt-in business-Customer sync.
+Open Lead-based and mapped business-Customer Opportunities are supported. Prospect and individual-Customer relationships, closed opportunities, product lines, foreign-currency conversion, additional/non-Customer addresses, custom fields, communication history, attachments and tasks/events remain outside the supported sync scope. Lead company name remains a text field; separate Organizations are created only by opt-in business-Customer sync.
 
 Duplicate checking currently scans at most 10,000 source and 10,000 target leads. Larger inventories are held for review. Each batch scans that inventory again; large-site optimization is still needed. Run history is administrator-only and currently retains every run (no retention cleanup yet). Failed rows record the exception class rather than arbitrary validation text; diagnosis may require reproducing the validation failure in development. There is no bulk undo of successful runs, force-overwrite button, or automatic conflict resolution.
 
@@ -92,3 +92,14 @@ Shared Contacts remain read-only for commission agents. An Organization link alo
 **Show managed links** lists relationships added through this workflow and lets an administrator remove the exact recorded CRM link. Existing ERPNext links and pre-existing CRM links are preserved. Removal remains available after the ERPNext source relationship is removed. Source unlinking or lifecycle changes do not automatically revoke an approved CRM relationship: administrators must review and remove it explicitly. A changed recorded child row is held for review rather than deleted. Approvals/removals have an audit record and appear in sync run history. There is no automatic Contact-link scheduler.
 
 Local browser verification covered Customer opt-in, native Organization links, explicit shared-Contact approval, access for the owning agent only, reversal, and mobile layout. It left global and Customer sync disabled. For repeat checks, seed the synthetic Opportunity fixture first, then copy `docker/local/seed-customer-contacts.py` into the local bench as `apps/crm/crm/local_relationship_seed.py` and execute `bench --site crm.localhost execute crm.local_relationship_seed.run`. The seed refuses any site other than muted `crm.localhost`. After deploying built assets, run `node docker/local/customer-contact-browser.cjs`.
+
+
+## Optional Customer primary Address reuse
+
+**Enable primary Address sync** is a separate, default-off control on the sync page. It runs only when global sync and Customer sync are enabled. The Customer's `customer_primary_address` must identify an enabled shared Address with an existing Dynamic Link to that exact Customer. Missing, disabled or unrelated addresses hold the entire Customer row for review.
+
+The Organization's `address` points to that existing record. No Address is copied, modified, deleted or given additional Dynamic Links. Address details therefore remain shared: authorized staff editing the Address will change the same record ERPNext uses. Commission agents gain no Address or Organization access.
+
+The first opt-in refuses to overwrite an existing different CRM address, including when the source has no primary address. Later source changes and clears use three-way comparison; conflicting CRM choices hold the entire Customer update. Disabling this option leaves existing references and comparison snapshots intact, so re-enabling it cannot silently overwrite intervening CRM edits. Clearing a source reference clears the Organization reference only when safe; the shared Address remains intact. Additional billing/shipping addresses and Lead/Prospect addresses remain outside this slice.
+
+Validation: 41 sync backend tests (including five primary Address tests), 253 frontend tests, lint and production build passed. Browser smoke verifies the opt-in controls and agent denial alongside Customer/Contact workflows. Automatic worker execution and production staging remain outstanding.

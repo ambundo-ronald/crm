@@ -34,7 +34,7 @@ A `create_candidate` is not approval or proof that a document can be inserted. D
 | --- | --- | --- |
 | Opportunity | CRM Deal | Open mapped Lead/business-Customer parties supported by sync; Prospect, foreign currency, products and terminal lifecycle remain for review |
 | Customer / Prospect | CRM Organization where appropriate | Company/Partnership Customer sync implemented with unique identity and duplicate review; Individual and Prospect mapping remain open |
-| Contact / Address | Reuse shared records | Individual Contact link review and reversal implemented; Address mapping remains open |
+| Contact / Address | Reuse shared records | Individual Contact link review and reversal implemented; opt-in verified Customer primary Address reuse implemented; additional/Lead/Prospect addresses remain open |
 | Industry Type / Territory | CRM Industry / CRM Territory | These are different linked DocTypes; do not copy source names blindly |
 | Notes / communications / files / ToDo / Event | Appropriate CRM activity/reference | Preserve ownership, timestamps, visibility and attachments; explicitly reconcile excluded history |
 
@@ -57,4 +57,4 @@ Duplicate scans are bounded to 10,000 source and 10,000 target leads. Larger inv
 
 Nine pure planner tests and three same-site integration tests pass. The integration suite wraps SQL during preview to reject write statements and verifies source timestamps/target records remain unchanged. It also tests pagination, malformed inputs, role restrictions and consent exceptions using temporary synthetic ERPNext Leads. Test setup creates fixtures; the preview itself does not.
 
-Next: review real source customizations and status/identity mappings using isolated staging or a sanitized export. The separate Lead sync now implements persisted source links, periodic reconciliation, conflict detection and per-record rollback/retry. Individual Customer/Prospect and Address relationships, foreign currencies, closed opportunities, history migration, full-batch undo and production validation remain outstanding. No production import or sync is configured.
+Next: review real source customizations and status/identity mappings using isolated staging or a sanitized export. The separate Lead sync now implements persisted source links, periodic reconciliation, conflict detection and per-record rollback/retry. Individual Customer/Prospect and additional Address relationships, foreign currencies, closed opportunities, history migration, full-batch undo and production validation remain outstanding. No production import or sync is configured.

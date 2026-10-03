@@ -27,6 +27,7 @@ class TestCustomerContactSync(IntegrationTestCase):
 				"enabled": 1,
 				"automatic": 0,
 				"sync_customers": 0,
+				"sync_customer_addresses": 0,
 				"sync_opportunities": 0,
 				"cursor": "",
 				"customer_cursor": "",
@@ -266,4 +267,78 @@ class TestCustomerContactSync(IntegrationTestCase):
 				approve_contact_link(self.contact.name, "Lead", self.lead.name, "forged")
 			with self.assertRaises(frappe.PermissionError):
 				remove_contact_link("forged")
+		frappe.set_user("Administrator")
+
+	def make_address(self, linked=True):
+		return frappe.get_doc(
+			{
+				"doctype": "Address",
+				"address_title": "Sync Address " + frappe.generate_hash(length=10),
+				"address_type": "Billing",
+				"address_line1": "Synthetic street",
+				"city": "Nairobi",
+				"country": "Kenya",
+				"links": [{"link_doctype": "Customer", "link_name": self.customer.name}] if linked else [],
+			}
+		).insert()
+
+	def test_primary_address_opt_in_reuses_identity_without_source_writes(self):
+		address = self.make_address()
+		self.customer.db_set("customer_primary_address", address.name)
+		before = frappe.get_doc("Address", address.name).as_dict()
+		organization = apply_customer(self.customer.name, {})["target"]
+		self.assertFalse(frappe.db.get_value("CRM Organization", organization, "address"))
+		result = apply_customer(self.customer.name, {}, sync_addresses=True)
+		self.assertEqual(result["status"], "Updated", result)
+		self.assertEqual(frappe.db.get_value("CRM Organization", organization, "address"), address.name)
+		self.assertEqual(frappe.get_doc("Address", address.name).as_dict(), before)
+		self.assertEqual(apply_customer(self.customer.name, {}, sync_addresses=True)["status"], "Unchanged")
+		self.customer.db_set("customer_primary_address", None)
+		self.assertEqual(apply_customer(self.customer.name, {}, sync_addresses=True)["status"], "Updated")
+		self.assertFalse(frappe.db.get_value("CRM Organization", organization, "address"))
+		self.assertTrue(frappe.db.exists("Address", address.name))
+
+	def test_address_conflicts_and_disabled_sync_preserve_baseline(self):
+		first, second, local = self.make_address(), self.make_address(), self.make_address()
+		self.customer.db_set("customer_primary_address", first.name)
+		organization = apply_customer(self.customer.name, {}, sync_addresses=True)["target"]
+		frappe.db.set_value("CRM Organization", organization, "address", local.name)
+		self.customer.db_set("customer_primary_address", second.name)
+		apply_customer(self.customer.name, {})
+		result = apply_customer(self.customer.name, {}, sync_addresses=True)
+		self.assertIn("field_conflict:address", result["issues"])
+		self.assertEqual(frappe.db.get_value("CRM Organization", organization, "address"), local.name)
+
+	def test_first_address_opt_in_preserves_existing_crm_choice(self):
+		organization = apply_customer(self.customer.name, {})["target"]
+		address = self.make_address()
+		frappe.db.set_value("CRM Organization", organization, "address", address.name)
+		result = apply_customer(self.customer.name, {}, sync_addresses=True)
+		self.assertIn("existing_organization_address_requires_review", result["issues"])
+
+	def test_unverified_or_disabled_address_blocks_whole_customer(self):
+		address = self.make_address(linked=False)
+		self.customer.db_set("customer_primary_address", address.name)
+		result = apply_customer(self.customer.name, {}, sync_addresses=True)
+		self.assertEqual(result["status"], "Review")
+		self.assertFalse(frappe.db.exists(LINK, {"source_name": self.customer.name}))
+		address.append("links", {"link_doctype": "Customer", "link_name": self.customer.name})
+		address.disabled = 1
+		address.save()
+		self.assertEqual(apply_customer(self.customer.name, {}, sync_addresses=True)["status"], "Review")
+
+	def test_address_setting_permissions_and_customer_batch(self):
+		from crm.migration.sync import configure_customer_addresses
+
+		address = self.make_address()
+		self.customer.db_set("customer_primary_address", address.name)
+		configure_customer_addresses(enabled=True)
+		configure_customers(enabled=True)
+		result = sync_batch(frappe.get_single(SETTINGS))
+		row = next(row for row in result["results"] if row["source"] == self.customer.name)
+		self.assertEqual(frappe.db.get_value("CRM Organization", row["target"], "address"), address.name)
+		for user in ("Guest", self.agent):
+			frappe.set_user(user)
+			with self.assertRaises(frappe.PermissionError):
+				configure_customer_addresses(enabled=True)
 		frappe.set_user("Administrator")

@@ -16,7 +16,8 @@
   "opportunity_status_map",
   "opportunity_cursor",
   "sync_customers",
-  "customer_cursor"
+  "customer_cursor",
+  "sync_customer_addresses"
  ],
  "fields": [
   {
@@ -91,6 +92,13 @@
    "label": "Customer Cursor",
    "fieldtype": "Data",
    "read_only": 1
+  },
+  {
+   "fieldname": "sync_customer_addresses",
+   "label": "Sync Customer Primary Addresses",
+   "fieldtype": "Check",
+   "default": "0",
+   "description": "Reuse verified Customer primary Address records on Organizations during Customer sync. Shared address details remain unchanged."
   }
  ],
  "permissions": [

@@ -102,6 +102,20 @@
               }}
             </p>
           </div>
+          <div class="space-y-2 border-t border-outline-gray-2 pt-3">
+            <p class="text-sm text-ink-gray-6">
+              {{
+                __(
+                  'Primary Address sync reuses each Customer’s verified primary Address on its Organization. Address details are shared with ERPNext; existing CRM choices and conflicting edits require review. This needs both Lead sync and Customer sync enabled.',
+                )
+              }}
+            </p>
+            <Button :disabled="busy" @click="toggleCustomerAddresses">{{
+              data.sync_customer_addresses
+                ? __('Disable primary Address sync')
+                : __('Enable primary Address sync')
+            }}</Button>
+          </div>
           <p v-if="data.automatic" class="text-sm text-ink-gray-6">
             {{
               __(
@@ -221,6 +235,21 @@ async function toggleOpportunities() {
   try {
     data.value = await call(api + 'configure_opportunities', {
       enabled: !data.value.sync_opportunities,
+    })
+  } catch (e) {
+    error.value =
+      e.messages?.join(' ') || e.message || __('Unable to save settings')
+  } finally {
+    busy.value = false
+  }
+}
+
+async function toggleCustomerAddresses() {
+  busy.value = true
+  error.value = ''
+  try {
+    data.value = await call(api + 'configure_customer_addresses', {
+      enabled: !data.value.sync_customer_addresses,
     })
   } catch (e) {
     error.value =

@@ -202,3 +202,11 @@ Migration preview milestone (2026-10-03): same-site Lead mapping and administrat
 - Local sync remains disabled and the scheduler paused. Production remains untouched.
 - Remaining migration work: Individual Customer/Prospect and Address mappings, currency/lifecycle policies, history/custom fields, large-inventory optimization, retention/undo and separate staging/restore validation. Commission calculations, reminders and external calendar integration remain separate roadmap items.
 - Usage and access implications: [ERPNext sync](erpnext-sync.md).
+
+
+### 2026-10-03: opt-in Customer primary Address reuse
+
+- Added a separate default-off setting to reuse verified Customer primary Addresses on mapped Organizations without copying or changing shared Address records.
+- Preserves existing CRM address choices, reviews invalid relationships and conflicting changes, and retains comparison history while disabled.
+- Validation: 41 sync backend tests, 253 frontend tests, lint/build and expanded Customer/Contact browser smoke passed. No new agent Address/Organization access.
+- Remaining: Prospect/individual relationships, additional Address mappings, history/custom fields, currency/lifecycle policy and separate staging/restore validation. Production unchanged; local sync disabled.
