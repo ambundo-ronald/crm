@@ -1,6 +1,6 @@
-﻿# ERPNext migration mapping and read-only preview
+# ERPNext migration mapping and read-only preview
 
-Status (2026-10-03): read-only preview remains available. Opt-in same-site Lead and open lead-based Opportunity sync have now been implemented for local testing; see [ERPNext sync](erpnext-sync.md). No production access or imports have occurred.
+Status (2026-10-03): read-only preview remains available. Opt-in same-site Lead, business-Customer Organization and open Lead/Customer Opportunity sync, plus individually reviewed shared Contact links, have been implemented for local testing; see [ERPNext sync](erpnext-sync.md). No production access or imports have occurred.
 
 ## First supported slice
 
@@ -20,7 +20,7 @@ It inventories source/target counts, lists custom fields, preserves source ident
 | status | CRM Lead Status | Proposed map below; target status must exist |
 | owner | proposed_creator + original-owner provenance | Preserve verified creator for agent access; explicit user mapping when identity changes |
 | lead_owner | lead_owner | Must resolve to an enabled staff System User, not an external Commission Agent |
-| name + current site | source_key [site, Lead, name] | Identity proposal; persisted unique mapping/checkpoints still need implementation |
+| name + current site | source_key [site, Lead, name] | Preview identity proposal; the separate sync now persists unique mapping/checkpoints |
 | creation, modified | provenance | Preserve source history separately in the future importer; no timestamp rewriting now |
 | existing Contact.links -> Lead | shared_contacts | Report existing identities; review before adding CRM Lead links because this changes agent visibility |
 
@@ -28,13 +28,13 @@ Proposed status mapping: Lead/Open -> New; Replied -> Contacted; Interested -> N
 
 A `create_candidate` is not approval or proof that a document can be inserted. Dynamic required fields, server scripts, workflow rules, custom validations, source history, consent and relationship mappings still need a controlled importer and staging checks. Matching email or phone is a duplicate candidate, never an automatic merge. Source duplicates are checked across the bounded source inventory, not only the requested page.
 
-### Remaining object mappings
+### Object mapping scope beyond the Lead preview
 
 | Source | Proposed destination | Work still required |
 | --- | --- | --- |
-| Opportunity | CRM Deal | Map party type/identity; source Lead to CRM Lead; opportunity_owner to deal_owner; opportunity_amount to deal_value; currency/exchange rate; expected_closing to expected_closure_date; sales_stage/status to approved CRM Deal Status; contacts/products and lifecycle review |
-| Customer / Prospect | CRM Organization where appropriate | Distinguish organizations from individuals; preserve ERPNext identity; avoid duplicate organizations |
-| Contact / Address | Reuse shared records | Review added links and resulting visibility; do not copy contacts just because the CRM app is new |
+| Opportunity | CRM Deal | Open mapped Lead/business-Customer parties supported by sync; Prospect, foreign currency, products and terminal lifecycle remain for review |
+| Customer / Prospect | CRM Organization where appropriate | Company/Partnership Customer sync implemented with unique identity and duplicate review; Individual and Prospect mapping remain open |
+| Contact / Address | Reuse shared records | Individual Contact link review and reversal implemented; Address mapping remains open |
 | Industry Type / Territory | CRM Industry / CRM Territory | These are different linked DocTypes; do not copy source names blindly |
 | Notes / communications / files / ToDo / Event | Appropriate CRM activity/reference | Preserve ownership, timestamps, visibility and attachments; explicitly reconcile excluded history |
 
@@ -57,4 +57,4 @@ Duplicate scans are bounded to 10,000 source and 10,000 target leads. Larger inv
 
 Nine pure planner tests and three same-site integration tests pass. The integration suite wraps SQL during preview to reject write statements and verifies source timestamps/target records remain unchanged. It also tests pagination, malformed inputs, role restrictions and consent exceptions using temporary synthetic ERPNext Leads. Test setup creates fixtures; the preview itself does not.
 
-Next: review real source customizations and status/identity mappings using isolated staging or a sanitized export. The separate Lead sync now implements persisted source links, periodic reconciliation, conflict detection and per-record rollback/retry. Customer/Prospect relationships, foreign currencies, closed opportunities, history migration, full-batch undo and production validation remain outstanding. No production import or sync is configured.
+Next: review real source customizations and status/identity mappings using isolated staging or a sanitized export. The separate Lead sync now implements persisted source links, periodic reconciliation, conflict detection and per-record rollback/retry. Individual Customer/Prospect and Address relationships, foreign currencies, closed opportunities, history migration, full-batch undo and production validation remain outstanding. No production import or sync is configured.

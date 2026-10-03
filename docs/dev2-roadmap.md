@@ -191,3 +191,14 @@ Migration preview milestone (2026-10-03): same-site Lead mapping and administrat
 - Sync and automatic scheduling remain disabled locally; production is untouched. See [ERPNext sync](erpnext-sync.md).
 
 - Fixed creator-preserving inserts to retain the administrator login session. Validation: 25 sync backend tests, 253 frontend tests, build/lint and the expanded browser smoke passed.
+
+
+### 2026-10-03: Customer Organizations and reviewed shared Contacts
+
+- Added opt-in Company/Partnership Customer -> Organization sync, independent checkpoints, creator provenance, duplicate review and field-conflict protection.
+- Open Customer Opportunities now reuse mapped Organizations without creating synthetic Leads.
+- Added individual shared Contact link review, explicit agent-access warnings, stale-review protection, audit history and removal of workflow-created links. Contacts are reused, not copied; batch sync never grants Contact access automatically.
+- Validation: 36 sync backend tests, 18 agent/appointment regression tests, 253 frontend tests, UI lint/build and Customer/Contact browser workflow passed.
+- Local sync remains disabled and the scheduler paused. Production remains untouched.
+- Remaining migration work: Individual Customer/Prospect and Address mappings, currency/lifecycle policies, history/custom fields, large-inventory optimization, retention/undo and separate staging/restore validation. Commission calculations, reminders and external calendar integration remain separate roadmap items.
+- Usage and access implications: [ERPNext sync](erpnext-sync.md).

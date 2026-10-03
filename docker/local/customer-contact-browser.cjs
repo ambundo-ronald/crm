@@ -1,0 +1,73 @@
+﻿const { chromium, expect } = require('@playwright/test')
+const fs = require('node:fs/promises')
+;(async () => {
+  const browser = await chromium.launch({ channel: 'msedge', headless: true })
+  try {
+    const context = await browser.newContext({ baseURL: 'http://127.0.0.1:18000', viewport: { width: 1440, height: 1000 } })
+    await context.addInitScript(() => localStorage.setItem('crm_persona_captured', '1'))
+    expect((await context.request.post('/api/method/login', { form: { usr: 'Administrator', pwd: 'Local-Dev2-Only-2026' } })).status()).toBe(200)
+    const page = await context.newPage()
+    const errors = []
+    page.on('pageerror', error => errors.push(error.message))
+    await page.goto('/crm/erpnext-sync')
+    await expect(page.getByRole('button', { name: 'Enable Customer sync', exact: true }).or(page.getByRole('button', { name: 'Disable Customer sync', exact: true }))).toBeVisible()
+    const onboarding = page.locator('div.fixed.z-50.right-0.w-80')
+    if (await onboarding.isVisible()) await onboarding.locator(':scope > div').first().getByRole('button').last().click()
+    if (await page.getByRole('button', { name: 'Enable Lead sync', exact: true }).isVisible()) await page.getByRole('button', { name: 'Enable Lead sync', exact: true }).click()
+    if (await page.getByRole('button', { name: 'Enable Customer sync', exact: true }).isVisible()) await page.getByRole('button', { name: 'Enable Customer sync', exact: true }).click()
+    const syncResponse = page.waitForResponse(response => response.url().endsWith('/crm.migration.sync.sync_now'))
+    await page.getByRole('button', { name: 'Sync now', exact: true }).click()
+    expect((await syncResponse).status()).toBe(200)
+    await expect(page.getByRole('button', { name: 'Sync now', exact: true })).toBeEnabled({ timeout: 30000 })
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    const run = page.locator('details').filter({ hasText: 'Dev2 Relationship Browser Company' }).first()
+    // The latest run stays collapsed until opened.
+    await page.locator('details').first().locator('summary').click()
+    const org = page.getByRole('link', { name: 'Open organization', exact: true }).first()
+    await expect(org).toBeVisible()
+    expect(await org.getAttribute('href')).toMatch(/\/crm\/organizations\//)
+    const agentContexts = []
+    for (const user of ['dev2.agent.a@example.invalid', 'dev2.agent.b@example.invalid']) {
+      const agent = await browser.newContext({ baseURL: 'http://127.0.0.1:18000' })
+      expect((await agent.request.post('/api/method/login', { form: { usr: user, pwd: 'Local-Dev2-Only-2026' } })).status()).toBe(200)
+      expect((await agent.request.get('/api/method/crm.migration.contacts.preview_contact_links')).status()).toBe(403)
+      agentContexts.push(agent)
+    }
+    async function visible(agent) {
+      const response = await agent.request.get('/api/method/crm.api.agent.list_contacts')
+      expect(response.status()).toBe(200)
+      return (await response.json()).message.some(row => row.first_name === 'Dev2 Shared Review Browser')
+    }
+    expect(await visible(agentContexts[0])).toBe(false)
+    await page.getByRole('button', { name: 'Review contact links', exact: true }).click()
+    const card = page.locator('article[data-source-type="Lead"]').filter({ hasText: 'Dev2 Shared Review Browser' })
+    for (let i = 0; i < 20; i++) {
+      await expect(page.getByRole('button', { name: 'Review contact links', exact: true })).toBeEnabled()
+      if (await card.count()) break
+      await page.getByRole('button', { name: 'Next contact page', exact: true }).click()
+    }
+    await expect(card).toContainText('dev2.agent.a@example.invalid')
+    await expect(card).toContainText('Other linked records remain hidden')
+    await card.getByRole('button', { name: 'Link and grant lead owner access', exact: true }).click()
+    await expect(card).toContainText('Already linked through this review')
+    expect(await visible(agentContexts[0])).toBe(true)
+    expect(await visible(agentContexts[1])).toBe(false)
+    await page.getByRole('button', { name: 'Show managed links', exact: true }).click()
+    const managed = page.locator('[data-managed-contact]').filter({ hasText: 'Dev2 Shared Review Browser' })
+    await managed.getByRole('button', { name: 'Remove CRM link', exact: true }).click()
+    await expect(managed).toHaveCount(0)
+    expect(await visible(agentContexts[0])).toBe(false)
+    await page.getByRole('button', { name: 'Disable Customer sync', exact: true }).click()
+    await page.getByRole('button', { name: 'Disable sync', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Enable Customer sync', exact: true })).toBeVisible()
+    await fs.mkdir('test-results', { recursive: true })
+    await page.screenshot({ path: 'test-results/customer-contact-sync.png', fullPage: true })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.reload()
+    await expect(page.getByRole('button', { name: 'Review contact links', exact: true })).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    expect(errors).toEqual([])
+    for (const agent of agentContexts) await agent.close()
+    console.log('PASS: Customer sync, Organization link, reviewed shared Contact, agent isolation, reversal, mobile layout; Customer/global sync disabled')
+  } finally { await browser.close() }
+})().catch(error => { console.error(error); process.exitCode = 1 })

@@ -5,7 +5,7 @@
       <p class="text-ink-gray-6">
         {{
           __(
-            'Bring ERPNext Leads into Frappe CRM on this site. Follow-ups, appointments, CRM status and salesperson changes stay in CRM. Optional Opportunity sync creates Deals for imported leads. Contact links are not synced yet.',
+            'Bring ERPNext Leads into Frappe CRM on this site. Follow-ups, appointments, CRM status and salesperson changes stay in CRM. Optional Opportunity sync creates Deals for imported leads. Optional Customer sync creates Organizations. Shared contact links require individual review below.',
           )
         }}
       </p>
@@ -23,12 +23,13 @@
               data.enabled ? __('Lead sync enabled') : __('Lead sync disabled')
             }}
             · {{ data.linked_leads }} {{ __('linked leads') }} ·
-            {{ data.linked_deals }} {{ __('linked deals') }}
+            {{ data.linked_deals }} {{ __('linked deals') }} ·
+            {{ data.linked_organizations }} {{ __('linked organizations') }}
           </p>
           <p class="text-sm text-ink-gray-6">
             {{
               __(
-                'Each run checks up to 50 leads and, when enabled, 50 opportunities. Review and failed records are retried on the next full pass. Conflicts never overwrite CRM edits.',
+                'Each run checks up to 50 records of each enabled type. Review and failed records are retried on the next full pass. Conflicts never overwrite CRM edits.',
               )
             }}
           </p>
@@ -52,7 +53,7 @@
               :loading="busy"
               @click="run"
               >{{
-                data.cursor || data.opportunity_cursor
+                data.cursor || data.opportunity_cursor || data.customer_cursor
                   ? __('Sync next batch')
                   : __('Sync now')
               }}</Button
@@ -63,7 +64,7 @@
             <p class="text-sm text-ink-gray-6">
               {{
                 __(
-                  'Opportunity sync supports open opportunities linked to imported leads, in the CRM base currency. Customer/prospect opportunities, products, other currencies and closed records require review.',
+                  'Opportunity sync supports open opportunities linked to imported leads or business customers, in the CRM base currency. Prospects, products, other currencies and closed records require review.',
                 )
               }}
             </p>
@@ -80,6 +81,27 @@
               }}
             </p>
           </div>
+          <div class="space-y-2 border-t border-outline-gray-2 pt-3">
+            <p class="text-sm text-ink-gray-6">
+              {{
+                __(
+                  'Customer sync creates Organizations for active companies and partnerships. Individuals, disabled or frozen customers, and duplicate names require review. Financial records are not copied.',
+                )
+              }}
+            </p>
+            <Button :disabled="busy" @click="toggleCustomers">{{
+              data.sync_customers
+                ? __('Disable Customer sync')
+                : __('Enable Customer sync')
+            }}</Button>
+            <p v-if="data.sync_customers && !data.enabled" class="text-sm">
+              {{
+                __(
+                  'Customer sync is selected. Enable Lead sync to run selected types.',
+                )
+              }}
+            </p>
+          </div>
           <p v-if="data.automatic" class="text-sm text-ink-gray-6">
             {{
               __(
@@ -92,6 +114,7 @@
           }}</a>
         </div>
         <p v-if="message" role="status">{{ message }}</p>
+        <ERPNextContactReview v-if="data.available" @changed="load" />
         <h2 class="text-lg font-semibold">{{ __('Recent runs') }}</h2>
         <p v-if="!data.runs.length" class="text-ink-gray-6">
           {{ __('No sync runs yet.') }}
@@ -114,16 +137,16 @@
               >
               <RouterLink
                 v-if="row.target"
-                :to="
-                  row.target_doctype === 'CRM Deal'
-                    ? { name: 'Deal', params: { dealId: row.target } }
-                    : { name: 'Lead', params: { leadId: row.target } }
-                "
+                :to="targetRoute(row)"
                 class="ml-2 underline"
                 >{{
                   row.target_doctype === 'CRM Deal'
                     ? __('Open deal')
-                    : __('Open lead')
+                    : row.target_doctype === 'CRM Organization'
+                      ? __('Open organization')
+                      : row.target_doctype === 'Contact'
+                        ? __('Open contact')
+                        : __('Open lead')
                 }}</RouterLink
               >
               <p
@@ -142,6 +165,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import ERPNextContactReview from '@/components/ERPNextContactReview.vue'
 import { Button, call } from 'frappe-ui'
 
 const data = ref(null)
@@ -149,6 +173,16 @@ const error = ref('')
 const message = ref('')
 const busy = ref(false)
 const api = 'crm.migration.sync.'
+
+function targetRoute(row) {
+  if (row.target_doctype === 'CRM Deal')
+    return { name: 'Deal', params: { dealId: row.target } }
+  if (row.target_doctype === 'CRM Organization')
+    return { name: 'Organization', params: { organizationId: row.target } }
+  if (row.target_doctype === 'Contact')
+    return { name: 'Contact', params: { contactId: row.target } }
+  return { name: 'Lead', params: { leadId: row.target } }
+}
 
 function results(run) {
   try {
@@ -187,6 +221,21 @@ async function toggleOpportunities() {
   try {
     data.value = await call(api + 'configure_opportunities', {
       enabled: !data.value.sync_opportunities,
+    })
+  } catch (e) {
+    error.value =
+      e.messages?.join(' ') || e.message || __('Unable to save settings')
+  } finally {
+    busy.value = false
+  }
+}
+
+async function toggleCustomers() {
+  busy.value = true
+  error.value = ''
+  try {
+    data.value = await call(api + 'configure_customers', {
+      enabled: !data.value.sync_customers,
     })
   } catch (e) {
     error.value =
