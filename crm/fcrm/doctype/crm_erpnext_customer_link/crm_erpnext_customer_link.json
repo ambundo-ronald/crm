@@ -13,7 +13,8 @@
   "target_snapshot",
   "source_creator",
   "source_created",
-  "source_modified"
+  "source_modified",
+  "custom_snapshot"
  ],
  "fields": [
   {
@@ -67,6 +68,13 @@
    "fieldname": "source_modified",
    "label": "Source Modified",
    "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "custom_snapshot",
+   "label": "Reviewed Custom Field Snapshot",
+   "fieldtype": "Long Text",
+   "read_only": 1,
+   "default": "{}"
   }
  ],
  "permissions": [

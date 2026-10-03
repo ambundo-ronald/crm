@@ -17,7 +17,8 @@
   "source_party",
   "target_lead",
   "source_party_doctype",
-  "target_organization"
+  "target_organization",
+  "custom_snapshot"
  ],
  "fields": [
   {
@@ -94,6 +95,13 @@
    "label": "Target Organization",
    "fieldtype": "Link",
    "options": "CRM Organization"
+  },
+  {
+   "fieldname": "custom_snapshot",
+   "label": "Reviewed Custom Field Snapshot",
+   "fieldtype": "Long Text",
+   "read_only": 1,
+   "default": "{}"
   }
  ],
  "permissions": [
