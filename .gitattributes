@@ -1,0 +1,2 @@
+# Keep local Linux helper scripts executable from Windows checkouts.
+docker/local/*.sh text eol=lf
