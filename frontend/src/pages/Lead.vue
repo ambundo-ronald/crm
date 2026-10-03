@@ -16,6 +16,11 @@
         v-if="document.actions?.length"
         :actions="document.actions"
       />
+      <Button
+        :label="__('Book appointment')"
+        iconLeft="calendar"
+        @click="$router.push({ name: 'Appointments', query: { lead: leadId } })"
+      />
       <EnrichFromWebsite
         doctype="CRM Lead"
         :docname="leadId"

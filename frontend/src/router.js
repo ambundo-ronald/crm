@@ -23,6 +23,11 @@ async function shouldCapturePersona() {
 
 const routes = [
   {
+    path: '/appointments',
+    name: 'Appointments',
+    component: () => import('@/pages/Appointments.vue'),
+  },
+  {
     path: '/',
     name: 'Home',
   },

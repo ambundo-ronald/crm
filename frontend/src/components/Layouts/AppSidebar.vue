@@ -48,6 +48,13 @@
             </template>
           </SidebarItem>
 
+          <SidebarItem
+            :label="__('My calendar')"
+            :to="{ name: 'Appointments' }"
+            :active="activeItem === 'Appointments'"
+          >
+            <template #prefix><span class="lucide-calendar size-4" /></template>
+          </SidebarItem>
           <CollapsibleSection
             v-for="section in allViews"
             :key="section.name"

@@ -190,6 +190,12 @@
             <EmailArea :activity="activity" :emailBox="emailBox" />
           </div>
           <div
+            v-else-if="activity.activity_type === 'appointment'"
+            class="mb-4"
+          >
+            <AppointmentArea :activity="activity" />
+          </div>
+          <div
             v-else-if="activity.activity_type == 'comment'"
             :id="activity.name"
             class="mb-4"
@@ -474,6 +480,8 @@ import OutboundCallIcon from '@/components/Icons/OutboundCallIcon.vue'
 import FadedScrollableDiv from '@/components/FadedScrollableDiv.vue'
 import CommunicationArea from '@/components/CommunicationArea.vue'
 import WhatsappTemplateSelectorModal from '@/components/Modals/WhatsappTemplateSelectorModal.vue'
+import AppointmentArea from '@/components/Activities/AppointmentArea.vue'
+import CalendarIcon from '@/components/Icons/CalendarIcon.vue'
 import AllModals from '@/components/Activities/AllModals.vue'
 import FilesUploader from '@/components/FilesUploader/FilesUploader.vue'
 import TimelineTimestamp from '@/components/Activities/TimelineTimestamp.vue'
@@ -672,7 +680,8 @@ const activities = computed(() => {
     if (
       activity.activity_type == 'incoming_call' ||
       activity.activity_type == 'outgoing_call' ||
-      activity.activity_type == 'communication'
+      activity.activity_type == 'communication' ||
+      activity.activity_type === 'appointment'
     )
       return
 
@@ -816,6 +825,9 @@ function timelineIcon(activity_type, is_lead) {
       break
     case 'deal':
       icon = DealsIcon
+      break
+    case 'appointment':
+      icon = CalendarIcon
       break
     case 'comment':
       icon = CommentIcon
