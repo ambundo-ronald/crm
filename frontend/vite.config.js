@@ -5,7 +5,7 @@ import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
-export default defineConfig(async ({ mode }) => {
+export default defineConfig(async ({ command, mode }) => {
   const isDev = mode === 'development'
   const config = {
     plugins: [
@@ -114,7 +114,8 @@ export default defineConfig(async ({ mode }) => {
   const frappeui = await importFrappeUIPlugin(isDev, config)
   config.plugins.unshift(
     frappeui({
-      frappeProxy: true,
+      // Only dev servers need proxy discovery; upstream discovery loops on Windows.
+      frappeProxy: command === 'serve',
       lucideIcons: true,
       jinjaBootData: true,
       buildConfig: {
