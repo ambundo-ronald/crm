@@ -23,7 +23,7 @@ Required policy: an external agent uses CRM only and can follow up leads they
 created; contacts are visible only if created by them or linked to their permitted
 leads. Assignment alone must not broaden this scope. Staff behavior stays intact.
 
-- [ ] Add a dedicated Commission Agent role/profile without Sales User, Sales Manager, System Manager, or ERPNext business roles.
+- [x] Add a dedicated Commission Agent role without staff roles and administrator-controlled restricted account creation (validated locally).
 - [x] Validate Website Users on local Frappe v16 using a dedicated agent workspace. Exact production patch validation remains a release gate.
 - [ ] Update CRM app eligibility, invitations, onboarding, route guards, and navigation for the new role.
 - [x] Land agents at /crm-agent (redirect from /crm) and restrict business access outside CRM on the server; retain necessary login/account infrastructure. Validated locally.
@@ -36,7 +36,7 @@ leads. Assignment alone must not broaden this scope. Staff behavior stays intact
 - [x] Filter linked contact responses so unrelated links, transactions, and internal activity are not exposed.
 - [ ] Audit search/autocomplete, counts, dashboards, custom APIs, raw SQL/get_all, files, timeline, email, notifications, realtime events, calendar and mobile routes.
 - [ ] Keep the agent restriction effective when hierarchy settings change; audit additive roles, User Permissions and DocShare for bypasses.
-- [ ] Add manager-controlled suspension/revocation and audit history; specify treatment of converted or reassigned leads.
+- [x] Add administrator-controlled suspension/reactivation, credential revocation and immutable console audit history; preserve creator scope and read-only converted leads (validated locally).
 - [ ] Test agent A versus agent B, staff and admin through both UI and direct APIs, including guessed IDs, forged links, exports, private attachments and role changes.
 
 Gate: agents cannot discover or alter out-of-scope data through any tested access path.
@@ -212,3 +212,13 @@ Migration preview milestone (2026-10-03): same-site Lead mapping and administrat
 
 
 Local restore evidence (2026-10-04): backup/database/public/private files restored into a new isolated local site; all 20 selected document-table hashes and five file hashes match. HTTP login, private-file restrictions and restored agent access pass. Full focused regression result: 74 backend tests and 253 frontend tests pass. Separate Cloud staging still does not exist; production release gates remain open.
+
+
+### 2026-10-04: external agent administration
+
+- Added administrator-only **Settings > User Management > Agents**: restricted account creation, search, separate password-setup invitations, suspension/reactivation with reasons and newest-first audit history.
+- Existing staff accounts cannot be converted here. Extra roles/profile issues block activation and invitation; suspension remains available. State changes reject stale account versions.
+- Suspension revokes sessions, API credentials, OAuth tokens and pending setup links while retaining CRM records. Reactivation does not revive old credentials. Disabled-agent checks also apply at the request/API boundary.
+- Validation: 26 focused backend tests, 253 frontend tests, lint/build and a browser/HTTP lifecycle check pass locally. Native invitation generation was tested with delivery mocked; local mail stays muted.
+- Remaining agent work: representative Cloud staging and cross-app/production-version checks, actual setup-email delivery, broader security review and deployment. Finance continues to handle all commissions outside CRM.
+- Usage, audit scope and deployment notes: [agent administration](commission-agents.md#agent-administration).
