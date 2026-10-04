@@ -29,7 +29,7 @@ def is_agent(user=None):
 
 
 def require_agent():
-	if not is_agent():
+	if not is_agent() or not frappe.db.get_value("User", frappe.session.user, "enabled"):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 	return frappe.session.user
 
@@ -38,6 +38,8 @@ def restrict_request():
 	# auth_hooks runs after both API-key/OAuth and cookie authentication.
 	if not is_agent():
 		return
+	if not frappe.db.get_value("User", frappe.session.user, "enabled"):
+		frappe.throw(_("This agent account is suspended."), frappe.AuthenticationError)
 	request = frappe.local.request
 	cmd = frappe.form_dict.get("cmd")
 	path = request.path.rstrip("/") or "/"

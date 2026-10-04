@@ -64,6 +64,7 @@ import EmailTemplateIcon from '@/components/Icons/EmailTemplateIcon.vue'
 import SettingsIcon from '@/components/Icons/SettingsIcon.vue'
 import SettingsIcon2 from '@/components/Icons/SettingsIcon2.vue'
 import Users from '@/components/Settings/Users.vue'
+import Agents from '@/components/Settings/Agents.vue'
 import Hierarchy from '@/components/Settings/Hierarchy/Hierarchy.vue'
 import InviteUserPage from '@/components/Settings/InviteUserPage.vue'
 import ProfilePage from '@/components/Settings/Profile/ProfilePage.vue'
@@ -158,6 +159,12 @@ const tabs = computed(() => {
           icon: 'user',
           component: markRaw(Users),
           condition: () => isManager(),
+        },
+        {
+          label: __('Agents'),
+          icon: 'user-check',
+          component: markRaw(Agents),
+          condition: () => isAdmin(),
         },
         {
           label: __('Invite User'),

@@ -1,0 +1,62 @@
+{
+ "doctype": "DocType",
+ "name": "CRM Agent Access Log",
+ "module": "FCRM",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "field_order": [
+  "agent",
+  "action",
+  "actor",
+  "reason",
+  "previous_enabled",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "agent",
+   "label": "Agent",
+   "fieldtype": "Link",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "action",
+   "label": "Action",
+   "fieldtype": "Select",
+   "options": "Created\nSuspended\nReactivated\nInvitation requested",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actor",
+   "label": "Administrator",
+   "fieldtype": "Link",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "label": "Reason",
+   "fieldtype": "Small Text",
+   "reqd": 1
+  },
+  {
+   "fieldname": "previous_enabled",
+   "label": "Previously Enabled",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "enabled",
+   "label": "Enabled",
+   "fieldtype": "Check"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC"
+}
