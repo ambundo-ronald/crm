@@ -10,7 +10,7 @@ Agents can create and follow up leads whose stored `owner` is their user. Assign
 
 Contacts are visible when created by the agent or explicitly linked through Contact.links to an agent-owned CRM Lead. Email matches do not grant access. Responses omit other links and internal history. Shared contacts are read-only; the API permits edits to an agent-created contact only while its links remain exclusively agent-owned leads and it has no deal contact reference. The initial UI supports contact creation and viewing.
 
-The workspace supports lead details, New/Contacted/Nurture/Qualified statuses, contact creation, and creating/completing personal follow-up tasks. Custom statuses require mapping. Lists and linked contacts return 25 records; lead detail returns the latest 50 personal follow-ups. Lead-linked appointments and meetings booked before lead creation are now available; see [calendar usage](agent-calendar.md). Reminders, invitations and commission accounting remain separate tasks.
+The workspace supports lead details, New/Contacted/Nurture/Qualified statuses, contact creation, and creating/completing personal follow-up tasks. Custom statuses require mapping. Lists and linked contacts return 25 records; lead detail returns the latest 50 personal follow-ups. Lead-linked appointments and meetings booked before lead creation are now available; see [calendar usage](agent-calendar.md). Reminders and invitations remain CRM tasks. Finance handles commissions separately; commission calculations, earnings statements and payouts are outside this CRM scope.
 
 ## Server enforcement
 

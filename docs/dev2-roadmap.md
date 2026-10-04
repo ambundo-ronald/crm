@@ -4,6 +4,8 @@ Status: baseline and initial agent workspace implemented locally; production unc
 Branch: dev2. Complete each release gate before enabling it for users.
 This complements `.pi/PLAN.md`; existing scripting contracts remain authoritative.
 
+Scope decision (2026-10-04): Finance handles commissions separately. Commission calculations, earnings, attribution for financial calculations, statements, approvals and payouts are excluded from this CRM roadmap. Restricted external-agent access and lead/contact ownership remain in scope.
+
 ## 0. Establish a safe baseline
 
 - [ ] Record deployed Frappe/ERPNext versions, installed apps, hosting, and whether CRM shares the ERPNext site.
@@ -25,7 +27,7 @@ leads. Assignment alone must not broaden this scope. Staff behavior stays intact
 - [x] Validate Website Users on local Frappe v16 using a dedicated agent workspace. Exact production patch validation remains a release gate.
 - [ ] Update CRM app eligibility, invitations, onboarding, route guards, and navigation for the new role.
 - [x] Land agents at /crm-agent (redirect from /crm) and restrict business access outside CRM on the server; retain necessary login/account infrastructure. Validated locally.
-- [ ] Define a server-controlled creator identity, distinct from mutable lead_owner and commission attribution; preserve verified source creators during imports.
+- [ ] Define a server-controlled creator identity, distinct from mutable lead_owner; preserve verified source creators during imports.
 - [x] Enforce creator-based lead visibility in list queries AND individual-document reads/writes; default deny for agent requests outside scope.
 - [x] Apply contact scope as creator OR valid relationship to an accessible lead. Verify actual Contact/Lead relationship schema before implementation.
 - [ ] Allow approved follow-up fields, notes, tasks, and appointments; prevent agents changing creators, attribution, permissions, ownership, or arbitrary contact links.
@@ -97,20 +99,7 @@ Gate: staff and agent calendars show only permitted data; reminders do not dupli
 
 Gate: advice does not silently change records; aggregates and duplicate warnings do not leak data.
 
-## 5. Commission tracking
-
-- [ ] Define commission basis: fixed amount or percentage, eligible products, collected revenue versus invoice/order/deal, taxes, currency, splits and effective dates.
-- [ ] Confirm approval, payout timing, cancellations, refunds, partial payments and clawback rules before implementing calculations.
-- [ ] Create an Agent profile and immutable/audited referral attribution from lead through deal/customer and financial references.
-- [ ] Snapshot the applicable commission rule for each earning; prevent recalculation under later rates without an approved adjustment.
-- [ ] Track pending, earned, approved and paid entries with source IDs and duplicate-event protection.
-- [ ] Use ERPNext as the payment source of truth; authorized staff approve and record payouts. Agents cannot approve their own earnings.
-- [ ] Optionally expose an agent's own statement without invoice/accounting access, only if the user expands the current leads/contacts-only scope.
-- [ ] Test splits, currencies, rounding, partial receipts, refunds, repeated sync events and attribution changes.
-
-Gate: reconciled sample earnings, audited approval, no duplicate commission or payout.
-
-## 6. External appointments and booking
+## 5. External appointments and booking
 
 - [ ] Confirm Google Calendar/Outlook needs and inspect existing framework integrations before adding connectors.
 - [ ] Implement explicit user connection, least-privilege scopes, secure tokens, disconnect/revocation and clear sync ownership.
@@ -120,7 +109,7 @@ Gate: reconciled sample earnings, audited approval, no duplicate commission or p
 
 Gate: two-way update/cancellation tests pass and concurrent bookings cannot reserve the same exclusive slot.
 
-## 7. AI assistance
+## 6. AI assistance
 
 - [ ] Choose provider, budget, data retention and approved data scope.
 - [ ] Add activity summaries, follow-up drafts and suggested next steps using only records the requester can read.
@@ -140,7 +129,6 @@ Gate: permission isolation verified and no automatic external messages.
 
 - ERPNext/Frappe versions, same or separate sites, hosting restrictions and source data volume.
 - One-time migration versus ongoing sync, and which system remains authoritative for each dataset.
-- Exact commission trigger/rates and whether agents should see their own earnings statements.
 - Whether creator access survives reassignment/conversion; shared-contact edit policy.
 - Required calendar provider(s) and whether customers need public booking immediately.
 
@@ -200,7 +188,7 @@ Migration preview milestone (2026-10-03): same-site Lead mapping and administrat
 - Added individual shared Contact link review, explicit agent-access warnings, stale-review protection, audit history and removal of workflow-created links. Contacts are reused, not copied; batch sync never grants Contact access automatically.
 - Validation: 36 sync backend tests, 18 agent/appointment regression tests, 253 frontend tests, UI lint/build and Customer/Contact browser workflow passed.
 - Local sync remains disabled and the scheduler paused. Production remains untouched.
-- Remaining migration work: Individual Customer/Prospect and Address mappings, currency/lifecycle policies, history/custom fields, large-inventory optimization, retention/undo and separate staging/restore validation. Commission calculations, reminders and external calendar integration remain separate roadmap items.
+- Remaining migration work: Individual Customer/Prospect and Address mappings, currency/lifecycle policies, history/custom fields, large-inventory optimization, retention/undo and separate staging/restore validation. Reminders and external calendar integration remain separate roadmap items.
 - Usage and access implications: [ERPNext sync](erpnext-sync.md).
 
 
