@@ -34,11 +34,11 @@ Agents can see their own unlinked meetings and appointments linked to leads they
 
 Events expanded by staff into shared, recurring or externally synchronized events cannot be edited or converted here. Existing staff Event workflows remain available. No custom schema is required.
 
-Pending: drag-and-drop rescheduling, My Day aggregation, attendees/invitations, no-show outcomes, configurable reminders, recurring appointments, and Google/Outlook synchronization. New events disable standard morning reminders and provider sync; local mail and scheduler remain disabled. Review site-specific automation in staging.
+Pending: drag-and-drop rescheduling, attendees/invitations, no-show outcomes, configurable reminders, recurring appointments, and Google/Outlook synchronization. New events disable standard morning reminders and provider sync; local mail and scheduler remain disabled. Review site-specific automation in staging.
 
 ## Validation
 
-18 backend tests cover existing agent access, appointment lifecycle, ownership, forged fields, date ranges, overlaps, DST, unlinked meetings, conversion, retries and staff permission checks. The existing 253 frontend tests and production build pass.
+35 focused backend tests cover My Day, agent administration, existing agent access, appointment lifecycle, ownership, forged fields, date ranges, overlaps, DST, unlinked meetings, conversion, retries and staff permission checks. The existing 253 frontend tests and production build pass.
 
 Browser checks:
 
@@ -54,3 +54,33 @@ Production deployment still requires separate staging and restore verification. 
 Lead Activity now reads linked appointments directly from Event records. Existing bookings and meetings converted to leads appear with their current title, times, location and status. Each Event has one card; both Lead and Event permissions are checked. Rescheduling or cancellation updates that card on the next activity refresh. The browser regression verifies converted meetings and direct bookings in Administrator and salesperson timelines. No backfill is required.
 
 The staff month grid spans six weeks. It loads two bounded 21-day requests without expanding server access or date-range limits, and deduplicates events spanning both requests. Day/week columns separate overlapping appointments. Five unit tests cover calendar boundaries, leap dates, multi-day events and overlap placement. Run `node docker/local/calendar-design-browser.cjs` for view navigation, click-to-book, details, search, status filtering, overlap rendering and mobile checks. This is a design update, not Google Calendar synchronization.
+
+
+## My Day
+
+Staff: select **My Day** in the CRM sidebar (`/crm/my-day`). Agents: select **My Day** in `/crm-agent`.
+
+- **Today's appointments**: permitted, personal, open meetings overlapping today, including overnight meetings. Open calendar details to reschedule, complete or cancel. Staff can book a new appointment directly from My Day.
+- **Overdue follow-ups**: open CRM Tasks due before today. Tasks due earlier today remain in **Due today**.
+- **Next 7 days**: tasks due tomorrow through the following seven calendar days. **No due date** keeps unscheduled work visible.
+- **New leads**: personal leads still in New status, oldest first. This is based on lead status; it does not infer whether emails or messages were answered.
+- **Mark done** completes a task after rechecking access and its last-modified version. **Open lead/deal** opens the permitted linked record. Refresh reloads all groups, counts and the current site date; the page does not update automatically in the background.
+
+Dates and times use the **site timezone** displayed on the page, independently of the browser's timezone. Staff tasks must be assigned to the current user, or created by them with no assignee, and must pass Task and linked Lead/Deal read permissions. Unlinked personal staff tasks are included. Task completion also requires write permission. Staff new leads use `lead_owner` plus normal document permissions.
+
+Agents see only tasks they created that reference leads they created. Assignment alone does not grant access. The restricted API projects only the fields required by My Day, excludes descriptions and unrelated data, and denies suspended users. Existing converted-lead and appointment rules still apply.
+
+Each task group and the lead list checks up to 100 candidates and reports when the scan is limited; appointment queries retain their existing 500-candidate cap. Counts describe displayed permitted records, not global totals. Complete old work or use Tasks, Leads, individual agent lead views and the calendar to access additional records.
+
+My Day requires no new schema, scheduler or outgoing email. Reminders, attendees/invitations, no-show outcomes, drag-and-drop and Google/Outlook synchronization remain separate work. Deploy updated Python/agent assets and rebuild the frontend; reverting those files removes My Day without deleting tasks or appointments. Completed tasks remain completed.
+
+Local validation (2026-10-05): 9 My Day tests plus 18 agent/calendar and 8 administration tests pass; 253 frontend tests, lint (one existing router warning) and production build pass. Browser checks cover Administrator, salesperson and agent task completion, appointment details/booking links, agent API isolation and mobile overflow. Synthetic fixtures are restricted to the muted `crm.localhost` site.
+
+```powershell
+docker compose -f docker/local/compose.yaml exec -T backend bash /source/crm/docker/local/test-productivity.sh
+docker cp docker/local/seed-productivity.py crm-dev2-backend-1:/workspace/frappe-bench/apps/crm/crm/_dev2_productivity_fixture.py
+docker exec -w /workspace/frappe-bench crm-dev2-backend-1 bench --site crm.localhost execute crm._dev2_productivity_fixture.run
+node docker/local/productivity-browser.cjs
+```
+
+Existing calendar design and agent workspace browser regressions also pass. The calendar smoke check now waits for the save dialog and reload to finish before entering its search filter.

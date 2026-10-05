@@ -78,7 +78,8 @@ and links reconciled. Existing ERPNext integration is not assumed to migrate all
 ## 3. My Day and internal calendar
 
 - [x] Audit existing Event capabilities and extend them with personal staff/agent appointment APIs and calendar entry points (local).
-- [ ] My Day: overdue tasks, today's follow-ups, appointments, unanswered leads and quick record/task actions.
+- [x] My Day: overdue, today, upcoming and undated tasks; today's appointments; New-status leads; quick completion and permitted record/calendar links for staff and agents (local).
+- [ ] Define and add unanswered-message indicators separately; lead status is not an unanswered-message metric.
 - [ ] Calendar: day/week/month views; calls, meetings, demos and follow-ups linked to permitted records.
 - [ ] Add attendees, responsible salesperson, timezone, location/meeting URL and configurable reminders.
 - [ ] Support rescheduling, cancellation, completed/no-show outcomes and next follow-up creation.
@@ -222,3 +223,13 @@ Local restore evidence (2026-10-04): backup/database/public/private files restor
 - Validation: 26 focused backend tests, 253 frontend tests, lint/build and a browser/HTTP lifecycle check pass locally. Native invitation generation was tested with delivery mocked; local mail stays muted.
 - Remaining agent work: representative Cloud staging and cross-app/production-version checks, actual setup-email delivery, broader security review and deployment. Finance continues to handle all commissions outside CRM.
 - Usage, audit scope and deployment notes: [agent administration](commission-agents.md#agent-administration).
+
+
+### 2026-10-05: My Day calendar and productivity
+
+- Added staff **My Day** navigation and a restricted agent **My Day** tab: open appointments today, overdue/today/upcoming/undated tasks and personal New-status leads.
+- Added permission-checked task completion with stale-edit protection, linked-record navigation and direct calendar details/booking entry points. Site-timezone day boundaries, bounded lists and visible truncation notices apply.
+- Staff tasks use personal assignment/ownership plus native document permissions. Agents retain creator-based lead/task scope, and suspended accounts remain denied.
+- Validation: 35 focused backend tests (9 My Day, 18 agent/calendar, 8 administration), 253 frontend tests, lint/build and staff/admin/agent browser workflows pass locally.
+- Remaining calendar/productivity work: configurable reminders, attendees/invitations, no-show outcomes and next-action creation, drag-and-drop rescheduling, recurring appointments, Google/Outlook integration and separate Cloud staging validation. Mail and scheduler remain disabled locally; production unchanged.
+- Usage and limits: [My Day](agent-calendar.md#my-day).
