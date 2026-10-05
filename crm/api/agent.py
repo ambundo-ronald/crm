@@ -269,3 +269,19 @@ def convert_appointment_to_lead(name, data):
 	from crm.api.appointments import convert_to_lead
 
 	return convert_to_lead(name, data)
+
+
+@frappe.whitelist(methods=["GET", "POST"])
+def my_day():
+	require_agent()
+	from crm.api.productivity import my_day as daily_work
+
+	return daily_work()
+
+
+@frappe.whitelist(methods=["POST"])
+def complete_daily_task(name: str, modified: str):
+	require_agent()
+	from crm.api.productivity import complete_task
+
+	return complete_task(name, modified)

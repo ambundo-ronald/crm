@@ -49,6 +49,13 @@
           </SidebarItem>
 
           <SidebarItem
+            :label="__('My Day')"
+            :to="{ name: 'MyDay' }"
+            :active="activeItem === 'MyDay'"
+          >
+            <template #prefix><span class="lucide-sun size-4" /></template>
+          </SidebarItem>
+          <SidebarItem
             :label="__('My calendar')"
             :to="{ name: 'Appointments' }"
             :active="activeItem === 'Appointments'"

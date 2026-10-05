@@ -713,7 +713,16 @@ onMounted(async () => {
     today.value = date.value
     await load()
   }
-  if (route.query.lead && !error.value) edit()
+  if ((route.query.lead || route.query.book === '1') && !error.value) edit()
+  if (typeof route.query.event === 'string' && !error.value) {
+    const event = appointments.value.find(
+      (row) => row.name === route.query.event,
+    )
+    if (event) {
+      detailRow.value = event
+      detail.value.showModal()
+    }
+  }
 })
 </script>
 

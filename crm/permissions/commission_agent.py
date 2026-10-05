@@ -7,6 +7,8 @@ ROLE = "Commission Agent"
 METHODS = frozenset(
 	{
 		"crm.api.agent.list_leads",
+		"crm.api.agent.my_day",
+		"crm.api.agent.complete_daily_task",
 		"crm.api.agent.list_appointments",
 		"crm.api.agent.save_appointment",
 		"crm.api.agent.convert_appointment_to_lead",

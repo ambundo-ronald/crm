@@ -53,6 +53,7 @@ async function run(fn) {
   }
 }
 async function loadList() {
+  if (view === "my-day") return loadMyDay();
   if (view === "calendar") return loadCalendar();
   const rows = await call(view === "leads" ? "list_leads" : "list_contacts", {
     start: offset,
@@ -483,3 +484,106 @@ function convertMeeting(row) {
     },
   );
 }
+
+async function loadMyDay() {
+  currentLead = null;
+  const data = await call("my_day");
+  if (view !== "my-day") return;
+  byId("list-title").textContent = "My Day";
+  byId("search-form").hidden = true;
+  byId("previous").disabled = true;
+  byId("next").disabled = true;
+  const records = byId("records"),
+    panel = byId("detail");
+  records.replaceChildren();
+  panel.replaceChildren();
+  text("p", `${data.date} · Times in ${data.time_zone}`, records);
+  action("Refresh My Day", loadMyDay, records);
+  text("h2", "Today's appointments", records);
+  if (data.appointments.truncated)
+    text("p", "List limited. Use My calendar to narrow the range.", records);
+  if (!data.appointments.items.length)
+    text("p", "No open appointments today.", records);
+  data.appointments.items.forEach((row) => {
+    const card = text("article", "", records);
+    card.dataset.event = row.name;
+    text("h3", row.subject, card);
+    text("p", `${row.starts_on} – ${row.ends_on}`, card);
+    if (row.location) text("p", row.location, card);
+    action(
+      "View in calendar",
+      async () => {
+        view = "calendar";
+        calendarDate = data.date;
+        calendarDays = 1;
+        await loadCalendar();
+      },
+      card,
+    );
+  });
+  text("h2", "New leads", records);
+  text("p", "Your leads in New status, oldest first.", records);
+  if (data.new_leads.truncated)
+    text("p", "List limited. Use My leads to find more records.", records);
+  if (!data.new_leads.items.length) text("p", "No new leads to show.", records);
+  data.new_leads.items.forEach((row) =>
+    action(
+      [row.first_name, row.last_name].filter(Boolean).join(" "),
+      () => loadLead(row.name),
+      records,
+    ),
+  );
+  text("h2", "My follow-ups", panel);
+  text("p", "Overdue means due before today. Refresh to see changes.", panel);
+  for (const [key, label] of [
+    ["overdue", "Overdue follow-ups"],
+    ["today", "Due today"],
+    ["upcoming", "Next 7 days"],
+    ["undated", "No due date"],
+  ]) {
+    const group = data.tasks[key];
+    const section = text("div", "", panel);
+    section.dataset.group = key;
+    text(
+      "h3",
+      `${label} (${group.items.length}${group.truncated ? "+" : ""})`,
+      section,
+    );
+    if (group.truncated)
+      text(
+        "p",
+        "List limited. Open an individual lead for its follow-ups.",
+        section,
+      );
+    if (!group.items.length) text("p", "No tasks to show.", section);
+    group.items.forEach((task) => {
+      const card = text("article", "", section);
+      card.dataset.task = task.name;
+      text("h4", task.title, card);
+      text("p", task.due_date || "No due date", card);
+      const done = action(
+        "Mark done",
+        async () => {
+          done.disabled = true;
+          try {
+            await call(
+              "complete_daily_task",
+              { name: String(task.name), modified: task.modified },
+              true,
+            );
+            await loadMyDay();
+          } finally {
+            done.disabled = false;
+          }
+        },
+        card,
+      );
+      action("Open lead", () => loadLead(task.reference_docname), card);
+    });
+  }
+}
+byId("my-day-tab").onclick = () =>
+  run(async () => {
+    view = "my-day";
+    await loadMyDay();
+  });
