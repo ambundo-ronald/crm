@@ -84,3 +84,12 @@ node docker/local/productivity-browser.cjs
 ```
 
 Existing calendar design and agent workspace browser regressions also pass. The calendar smoke check now waits for the save dialog and reload to finish before entering its search filter.
+
+
+## Light and dark appearance
+
+My Calendar (all views, event states and booking/details dialogs), My Day, agent administration and ERPNext sync use the CRM appearance setting under **Settings > Preferences > Theme**. Native date, select and text controls follow the selected theme too.
+
+The standalone agent workspace has a **Theme** selector in its header: Light, Dark or System. It shares the browser's CRM preference, persists across reloads and follows operating-system changes when System is selected.
+
+Run `node docker/local/theme-browser.cjs` to check light/dark surfaces and primary text contrast, calendar event colours and native controls, agent theme persistence/system switching and mobile width. This check reads local synthetic data without saving appointments or changing account access.

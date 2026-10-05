@@ -233,3 +233,11 @@ Local restore evidence (2026-10-04): backup/database/public/private files restor
 - Validation: 35 focused backend tests (9 My Day, 18 agent/calendar, 8 administration), 253 frontend tests, lint/build and staff/admin/agent browser workflows pass locally.
 - Remaining calendar/productivity work: configurable reminders, attendees/invitations, no-show outcomes and next-action creation, drag-and-drop rescheduling, recurring appointments, Google/Outlook integration and separate Cloud staging validation. Mail and scheduler remain disabled locally; production unchanged.
 - Usage and limits: [My Day](agent-calendar.md#my-day).
+
+
+### 2026-10-05: dark mode across custom CRM screens
+
+- Replaced fixed white calendar surfaces and light-only event colours with theme tokens; improved muted/cancelled text contrast and native date/select controls.
+- Applied themed text, cards and form fields to My Day, agent administration and ERPNext sync review panels.
+- Added Light/Dark/System appearance to the standalone agent workspace, sharing the CRM browser preference with reload persistence and live system-theme changes.
+- Validation: 253 frontend tests, lint/build and light/dark browser contrast and theme-selection checks. Production unchanged.
