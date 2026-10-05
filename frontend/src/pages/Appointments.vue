@@ -728,6 +728,7 @@ onMounted(async () => {
 
 <style scoped>
 .calendar-brand {
+  color: var(--ink-gray-9);
   display: flex;
   gap: 10px;
   align-items: center;
@@ -741,8 +742,8 @@ onMounted(async () => {
   height: 28px;
   border-radius: 6px;
   border-top: 6px solid #4285f4;
-  color: #1967d2;
-  background: #e8f0fe;
+  color: var(--ink-blue-9);
+  background: var(--surface-blue-1);
   font-size: 15px;
 }
 .calendar-shell {
@@ -752,7 +753,7 @@ onMounted(async () => {
   min-height: 0;
   overflow: hidden;
   color: var(--ink-gray-8, #343941);
-  background: var(--surface-white, #fff);
+  background: var(--surface-base);
 }
 .calendar-sidebar {
   width: 220px;
@@ -794,19 +795,19 @@ onMounted(async () => {
   border-radius: 50%;
 }
 .mini-weekday {
-  color: var(--ink-gray-5, #69717b);
+  color: var(--ink-gray-6);
   padding: 4px 0;
 }
 .mini-grid .chosen {
-  background: #d3e3fd;
-  color: #174ea6;
+  background: var(--surface-blue-2);
+  color: var(--ink-blue-9);
 }
 .mini-grid .today {
   background: #1967d2;
-  color: white;
+  color: var(--ink-white, #fff);
 }
 .mini-grid .muted {
-  opacity: 0.45;
+  opacity: 0.7;
 }
 .date-picker {
   margin: 24px 0;
@@ -830,7 +831,7 @@ onMounted(async () => {
   appearance: auto;
   padding: 0;
   background: revert;
-  accent-color: #1967d2;
+  accent-color: var(--ink-blue-9);
   width: 15px;
   height: 15px;
 }
@@ -858,7 +859,7 @@ onMounted(async () => {
 .sidebar-tip {
   font-size: 12px;
   line-height: 1.6;
-  color: var(--ink-gray-5, #69717b);
+  color: var(--ink-gray-6);
   margin: 24px 0;
 }
 .timezone {
@@ -866,7 +867,7 @@ onMounted(async () => {
   gap: 7px;
   align-items: center;
   font-size: 11px;
-  color: var(--ink-gray-5, #69717b);
+  color: var(--ink-gray-6);
 }
 .calendar-main {
   flex: 1;
@@ -940,7 +941,7 @@ onMounted(async () => {
   text-align: center;
   font-size: 11px;
   text-transform: uppercase;
-  color: var(--ink-gray-5, #69717b);
+  color: var(--ink-gray-6);
   padding: 12px 0;
 }
 .month-grid {
@@ -964,7 +965,7 @@ onMounted(async () => {
   background: var(--surface-gray-1, #fafbfc);
 }
 .other-month .day-heading {
-  opacity: 0.45;
+  opacity: 0.7;
 }
 .day-heading {
   display: flex;
@@ -980,7 +981,7 @@ onMounted(async () => {
 }
 .today-number {
   background: #1967d2;
-  color: white;
+  color: var(--ink-white, #fff);
   border-radius: 50%;
 }
 .add-day {
@@ -996,7 +997,7 @@ onMounted(async () => {
   border-radius: 4px;
 }
 .empty-day:hover {
-  background: #4285f40a;
+  background: var(--surface-blue-1);
 }
 .month-event {
   display: flex;
@@ -1020,27 +1021,27 @@ onMounted(async () => {
   font-weight: 500;
 }
 .linked {
-  background: #d3e3fd;
-  color: #174ea6;
+  background: var(--surface-blue-2);
+  color: var(--ink-blue-9);
 }
 .intro {
-  background: #ede2fc;
-  color: #6236a0;
+  background: var(--surface-violet-2);
+  color: var(--ink-violet-9);
 }
 .completed {
-  background: #d5eddf;
-  color: #17633f;
+  background: var(--surface-green-2);
+  color: var(--ink-green-9);
 }
 .cancelled {
   background: var(--surface-gray-2, #edf0f2);
-  color: var(--ink-gray-5, #69717b);
+  color: var(--ink-gray-6);
   text-decoration: line-through;
 }
 .more-events {
   text-align: left;
   font-size: 11px;
   padding: 4px 6px;
-  color: var(--ink-gray-5, #69717b);
+  color: var(--ink-gray-6);
 }
 .time-view {
   display: flex;
@@ -1093,7 +1094,7 @@ onMounted(async () => {
   position: absolute;
   right: 8px;
   font-size: 10px;
-  color: var(--ink-gray-5, #69717b);
+  color: var(--ink-gray-6);
 }
 .time-day {
   position: relative;
@@ -1109,7 +1110,7 @@ onMounted(async () => {
   border-top-style: solid;
 }
 .time-slot:hover {
-  background: #4285f410;
+  background: var(--surface-blue-1);
 }
 .time-event {
   position: absolute;
@@ -1174,7 +1175,7 @@ onMounted(async () => {
 .empty-state {
   text-align: center;
   padding: 60px 0;
-  color: var(--ink-gray-5, #69717b);
+  color: var(--ink-gray-6);
 }
 .calendar-controls {
   display: flex;
@@ -1193,7 +1194,7 @@ select {
   border-radius: 6px;
   padding: 8px;
   color: inherit;
-  background: var(--surface-white, #fff);
+  background: var(--surface-base);
 }
 button:focus-visible {
   outline: 2px solid #4285f4;
@@ -1206,7 +1207,7 @@ button:focus-visible {
   padding: 24px;
   border-radius: 14px;
   color: var(--ink-gray-8, #343941);
-  background: var(--surface-white, #fff);
+  background: var(--surface-base);
   box-shadow: 0 12px 50px #0003;
 }
 .calendar-dialog::backdrop {

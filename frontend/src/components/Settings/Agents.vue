@@ -1,5 +1,7 @@
 <template>
-  <section class="h-full space-y-5 overflow-auto p-6 text-ink-gray-8">
+  <section
+    class="crm-themed-panel h-full space-y-5 overflow-auto p-6 text-ink-gray-8"
+  >
     <h2 class="text-2xl font-semibold">{{ __('Agents') }}</h2>
     <p class="text-sm text-ink-gray-6">
       {{

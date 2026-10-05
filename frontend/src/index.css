@@ -30,3 +30,33 @@
 .menu-content {
   z-index: 101;
 }
+
+/* Native controls in the custom calendar and administration panels. */
+.crm-themed-panel {
+  color: var(--ink-gray-8);
+  background: var(--surface-elevation-2);
+}
+.crm-themed-panel
+  :where(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  color: var(--ink-gray-8);
+  background-color: var(--surface-base);
+  border-color: var(--outline-gray-3);
+}
+.crm-themed-panel :where(input, textarea)::placeholder {
+  color: var(--ink-gray-6);
+}
+.crm-themed-panel :where([class~='border'], [class~='border-t']) {
+  border-color: var(--outline-gray-2);
+}
+.crm-themed-panel :where(input, select, textarea):focus-visible {
+  outline: 2px solid var(--outline-blue-4);
+  outline-offset: 2px;
+}
+.crm-themed-panel,
+.calendar-shell,
+.calendar-dialog {
+  color-scheme: light;
+}
+[data-theme='dark'] :is(.crm-themed-panel, .calendar-shell, .calendar-dialog) {
+  color-scheme: dark;
+}

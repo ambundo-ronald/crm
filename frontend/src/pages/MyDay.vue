@@ -1,7 +1,9 @@
 <template>
   <LayoutHeader>
     <template #left-header
-      ><h1 class="text-lg font-semibold">{{ __('My Day') }}</h1></template
+      ><h1 class="text-lg font-semibold text-ink-gray-9">
+        {{ __('My Day') }}
+      </h1></template
     >
     <template #right-header
       ><Button :disabled="busy" @click="load">{{
@@ -9,7 +11,9 @@
       }}</Button></template
     >
   </LayoutHeader>
-  <main class="flex-1 overflow-auto bg-surface-gray-1 p-4 sm:p-6">
+  <main
+    class="flex-1 overflow-auto text-ink-gray-8 bg-surface-gray-1 p-4 sm:p-6"
+  >
     <div class="mx-auto max-w-6xl space-y-6">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -40,7 +44,7 @@
             v-for="tile in tiles"
             :key="tile.key"
             :href="'#daily-' + tile.key"
-            class="rounded-xl border border-outline-gray-2 bg-surface-cards p-4"
+            class="rounded-xl border border-outline-gray-2 bg-surface-elevation-1 p-4"
             ><span class="text-sm text-ink-gray-6">{{ tile.label }}</span
             ><strong class="mt-2 block text-3xl text-ink-gray-9"
               >{{ tile.group.items.length

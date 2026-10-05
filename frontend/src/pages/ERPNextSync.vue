@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full overflow-auto p-5 sm:p-8">
+  <div class="crm-themed-panel h-full overflow-auto p-5 sm:p-8">
     <div class="mx-auto max-w-4xl space-y-5">
       <h1 class="text-2xl font-semibold">{{ __('ERPNext sync') }}</h1>
       <p class="text-ink-gray-6">

@@ -1,10 +1,37 @@
+/* Standalone workspace shares the CRM light/dark/system preference. */
+:root {
+  color-scheme: light;
+  --agent-page: #f5f7fa;
+  --agent-surface: #ffffff;
+  --agent-ink: #172b4d;
+  --agent-muted: #53657d;
+  --agent-border: #dce2eb;
+  --agent-control-border: #aebbcf;
+  --agent-action: #173a66;
+  --agent-hover: #eaf1fb;
+  --agent-error: #a32323;
+  --agent-backdrop: #172b4d66;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --agent-page: #171717;
+  --agent-surface: #212121;
+  --agent-ink: #ededed;
+  --agent-muted: #b9c3cf;
+  --agent-border: #414750;
+  --agent-control-border: #687482;
+  --agent-action: #b5d8ff;
+  --agent-hover: #293b50;
+  --agent-error: #ffaaaa;
+  --agent-backdrop: #00000099;
+}
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
-  background: #f5f7fa;
-  color: #172b4d;
+  background: var(--agent-page);
+  color: var(--agent-ink);
   font:
     16px/1.5 system-ui,
     sans-serif;
@@ -17,12 +44,14 @@ main {
 }
 header {
   display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   align-items: center;
   justify-content: space-between;
 }
 header p {
   margin: 4px 0;
-  color: #53657d;
+  color: var(--agent-muted);
 }
 nav,
 .actions,
@@ -39,8 +68,8 @@ nav,
 }
 section,
 dialog {
-  background: white;
-  border: 1px solid #dce2eb;
+  background: var(--agent-surface);
+  border: 1px solid var(--agent-border);
   border-radius: 12px;
   padding: 24px;
 }
@@ -52,13 +81,13 @@ select {
 button {
   cursor: pointer;
   padding: 9px 16px;
-  border: 1px solid #b8c5d6;
+  border: 1px solid var(--agent-control-border);
   border-radius: 7px;
-  background: white;
-  color: #173a66;
+  background: var(--agent-surface);
+  color: var(--agent-action);
 }
 button:hover {
-  background: #eaf1fb;
+  background: var(--agent-hover);
 }
 button:disabled {
   opacity: 0.5;
@@ -70,7 +99,7 @@ select {
   width: 100%;
   margin: 5px 0 16px;
   padding: 10px;
-  border: 1px solid #aebbcf;
+  border: 1px solid var(--agent-control-border);
   border-radius: 6px;
 }
 label {
@@ -80,7 +109,7 @@ dialog {
   width: min(520px, 95vw);
 }
 dialog::backdrop {
-  background: #172b4d66;
+  background: var(--agent-backdrop);
 }
 .record {
   display: block;
@@ -89,7 +118,7 @@ dialog::backdrop {
   margin: 10px 0;
 }
 .muted {
-  color: #53657d;
+  color: var(--agent-muted);
 }
 #message {
   min-height: 24px;
@@ -116,7 +145,7 @@ li {
   margin: 12px 0;
 }
 #message.error {
-  color: #a32323;
+  color: var(--agent-error);
 }
 @media (max-width: 700px) {
   .workspace {
@@ -127,4 +156,33 @@ li {
   section {
     padding: 16px;
   }
+}
+
+input,
+select,
+textarea,
+dialog {
+  color: var(--agent-ink);
+  background-color: var(--agent-surface);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--agent-muted);
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--agent-action);
+  outline-offset: 2px;
+}
+.error {
+  color: var(--agent-error);
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-actions select {
+  margin: 4px 0 0;
 }
