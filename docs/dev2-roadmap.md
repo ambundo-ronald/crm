@@ -1,10 +1,12 @@
 # dev2 CRM implementation checklist
 
-Status: baseline and initial agent workspace implemented locally; production unchanged.
+Status: baseline and restricted Agent access through the original CRM interface implemented locally; production unchanged.
 Branch: dev2. Complete each release gate before enabling it for users.
 This complements `.pi/PLAN.md`; existing scripting contracts remain authoritative.
 
 Scope decision (2026-10-04): Finance handles commissions separately. Commission calculations, earnings, attribution for financial calculations, statements, approvals and payouts are excluded from this CRM roadmap. Restricted external-agent access and lead/contact ownership remain in scope.
+
+Scope decision (2026-10-06): Agents use the original CRM UI and the normal invitation flow with the Agent role. The separate agent workspace is retired. The Agents settings page remains for administrator suspension/reactivation and access history. See [Agent access](commission-agents.md).
 
 ## 0. Establish a safe baseline
 
@@ -23,10 +25,10 @@ Required policy: an external agent uses CRM only and can follow up leads they
 created; contacts are visible only if created by them or linked to their permitted
 leads. Assignment alone must not broaden this scope. Staff behavior stays intact.
 
-- [x] Add a dedicated Commission Agent role without staff roles and administrator-controlled restricted account creation (validated locally).
-- [x] Validate Website Users on local Frappe v16 using a dedicated agent workspace. Exact production patch validation remains a release gate.
-- [ ] Update CRM app eligibility, invitations, onboarding, route guards, and navigation for the new role.
-- [x] Land agents at /crm-agent (redirect from /crm) and restrict business access outside CRM on the server; retain necessary login/account infrastructure. Validated locally.
+- [x] Add an Agent role without staff roles and creation through normal CRM invitations (validated locally).
+- [x] Validate Website Users on local Frappe v16 using the original CRM interface. Exact production patch validation remains a release gate.
+- [x] Update CRM app eligibility, invitations, onboarding, route guards, and navigation for the new role (validated locally).
+- [x] Land agents at /crm (legacy /crm-agent redirects here) and restrict business access outside CRM on the server; retain necessary login/account infrastructure. Validated locally.
 - [ ] Define a server-controlled creator identity, distinct from mutable lead_owner; preserve verified source creators during imports.
 - [x] Enforce creator-based lead visibility in list queries AND individual-document reads/writes; default deny for agent requests outside scope.
 - [x] Apply contact scope as creator OR valid relationship to an accessible lead. Verify actual Contact/Lead relationship schema before implementation.

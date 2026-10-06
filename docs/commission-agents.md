@@ -1,58 +1,45 @@
-# Commission Agent workspace
+# Restricted Agent access
 
-Status: implemented and tested locally on dev2. Production deployment remains gated on a separate staging site and the checks below.
+Status: implemented and validated locally on dev2. Production is unchanged; a separate staging site remains required before release.
+
+## Invite and access
+
+Use **Settings > User Management > Invite User**, enter the email and choose **Agent** under **Invite As**. Manager and Sales User retain their existing behavior. Agent invitations create restricted Website Users and direct them to `/crm`, using the original CRM interface. Existing accounts are rejected rather than silently converted to agents. No separate agent workspace is required; old `/crm-agent` bookmarks redirect to `/crm`.
+
+Agents use Leads, Contacts, Tasks, My Day and My Calendar. They can create leads and contacts, update permitted fields, add follow-up tasks and book personal appointments, including meetings before a lead exists. Their account menu offers Light, Dark, System and logout.
 
 ## Access policy
 
-Agents use `/crm-agent`. Administrators create their restricted Website User accounts through **Settings > User Management > Agents**. These accounts receive only the Commission Agent role, without staff or ERPNext business roles. The separate staff invitation flow remains for staff. Do not assign this role to staff: its request restriction applies even when other roles are present (except the literal Administrator account).
+- Leads are scoped to stored `owner`, not mutable sales owner, assignment or sharing. Converted leads are read-only.
+- Contacts are visible if created by the agent or explicitly linked to a lead they own. Shared contacts are read-only; unrelated links and internal fields are omitted.
+- Tasks must be created by the agent and reference a lead they own. Appointments are personal private Events, unlinked or linked to an owned lead.
+- Agents cannot access ERPNext, Desk, deals, organizations, administration, exports, bulk imports, private files, other users' records or unrestricted APIs.
 
-Agents can create and follow up leads whose stored `owner` is their user. Assignment and sharing do not expand visibility. Reassignment does not change the creator; converted leads are read-only. ERPNext Lead sync preserves verified source creators; ambiguous creators require review.
+The server applies default-deny request restrictions even when extra staff roles are accidentally added (the literal Administrator account is exempt). Frontend navigation is not the security boundary. Native CRM API requests use a restricted compatibility layer with explicit field projections, scoped queries/counts and validated writes. Staff calls retain their original handlers, including earlier installed-app overrides. If another app replaces the restricted handler, agent requests fail closed.
 
-Contacts are visible when created by the agent or explicitly linked through Contact.links to an agent-owned CRM Lead. Email matches do not grant access. Responses omit other links and internal history. Shared contacts are read-only; the API permits edits to an agent-created contact only while its links remain exclusively agent-owned leads and it has no deal contact reference. The initial UI supports contact creation and viewing.
+Agent list customization, custom form scripts, attachments, email activity, sharing and realtime subscriptions are unavailable. Agent activity contains scoped creation, tasks and appointments; it does not expose internal staff history. Guarded operations do not grant broad DocType permissions.
 
-The workspace supports lead details, New/Contacted/Nurture/Qualified statuses, contact creation, and creating/completing personal follow-up tasks. Custom statuses require mapping. Lists and linked contacts return 25 records; lead detail returns the latest 50 personal follow-ups. Lead-linked appointments and meetings booked before lead creation are now available; see [calendar usage](agent-calendar.md). Reminders and invitations remain CRM tasks. Finance handles commissions separately; commission calculations, earnings statements and payouts are outside this CRM scope.
+## Administration and existing accounts
 
-## Server enforcement
+**Settings > User Management > Agents** remains an administrator lifecycle console, with **Invite an Agent** linking to the normal invitation screen. It is not a separate interface for agents.
 
-An authentication hook restricts agent HTTP requests after built-in session/token authentication. Only the workspace and explicit agent/login/logout methods are allowed. ERPNext routes, generic document APIs, exports, private files and realtime authentication are denied. Public static assets remain public. Existing staff permissions continue to apply to staff.
+Administrators can suspend/reactivate access and view immutable access history. Suspension revokes sessions, API/OAuth credentials and pending setup links while preserving records and ownership. Reactivation requires a compatible restricted account; revoked credentials stay invalid. Setup email actions require confirmation, working outgoing mail and an unmuted site. Audit history covers these console actions, not arbitrary database or third-party changes.
 
-Dedicated endpoints check stored ownership, reject unsupported fields and return explicit field projections. Guarded writes use ignore_permissions without granting broad DocType permissions. Test custom authentication hooks, proxies and installed apps on a separate staging site before deployment.
-
-## Agent administration
-
-Open **Settings > User Management > Agents** as Administrator or a System Manager. Agents are denied even if they have additional administrator roles; sales managers and sales users cannot administer agents here.
-
-1. Enter the agent's first name, optional last name and email, then select **Create agent**. Existing accounts are rejected rather than converted. Creating an account sends no email.
-2. Select **Send setup email** and confirm when ready. Frappe generates its expiring password setup link and directs the agent to `/crm-agent` after setup. Passwords and setup links are never displayed to administrators. Email-muted sites block this action. Repeated invitations are rate-limited; delivery depends on the site's outgoing email configuration.
-3. Select **Suspend access**, enter a reason and confirm. The account is disabled, sessions and API credentials are revoked, OAuth tokens are revoked, authorization codes are removed and pending setup links are invalidated. Leads, contacts, appointments and ownership are preserved.
-4. Select **Reactivate access**, give a reason and confirm. The agent can sign in again using their existing password; old sessions, API tokens and setup links stay invalid. Extra roles, a role profile or an incompatible account type must be reviewed before activation or invitation.
-5. **Access history** shows creation, invitation requests, suspension and reactivation, newest first, with the acting administrator and reason. Searches and history are paginated. Concurrent account edits require a refresh before applying an action.
-
-Audit records cannot be edited or deleted through normal document operations. This history covers actions performed through this console, not arbitrary Desk, database or third-party changes. Audit remaining roles before removing the agent role or repurposing any account. Converted leads remain read-only; reassignment alone does not change creator access.
-
-Deployment requires `bench --site <site> migrate` to create the additive CRM Agent Access Log DocType and a frontend build. Roll back application code without deleting audit records or re-enabling suspended users. Separate Cloud staging, cross-app checks and actual outgoing email delivery remain release gates.
+Run `bench --site <site> migrate` and rebuild frontend assets on deployment. Migration adds the **Agent** role, migrates existing **Commission Agent** memberships and updates their landing route without changing record ownership. Both role names remain recognized by the request guard for compatibility. Review other roles before repurposing an account. Do not delete audit records or automatically reactivate suspended accounts during rollback.
 
 ## Local validation
 
-Open http://localhost:18000/crm-agent after starting the local backend.
-Synthetic user: dev2.agent.a@example.invalid
-Local-only password: Local-Dev2-Only-2026
+Local site: http://localhost:18000/crm. Synthetic agent: `dev2.agent.a@example.invalid`, password `Local-Dev2-Only-2026`. These fixtures belong only on the isolated, mail-muted `crm.localhost` site and must never be deployed.
 
-The local seeding scripts require the isolated crm.localhost site with mail muted. Never deploy these fixture credentials.
-
-Verified locally: 26 backend integration tests (18 agent/appointment and 8 administration); session and API-token denial checks; headless Edge lead/contact/follow-up and appointment booking/rescheduling/completion/navigation workflow; existing staff smoke checks. The broader CRM Lead suite remains blocked by the missing ERPNext Payment Gateway fixture (zero tests ran in that suite).
-
-Run from the repository root with the local backend available:
+After deploying the updated app into the local bench:
 
 ```powershell
-docker compose -f docker/local/compose.yaml exec -T backend bash /source/crm/docker/local/test-agents.sh
-docker compose -f docker/local/compose.yaml exec -T backend bash /source/crm/docker/local/test-agent-admin.sh
-node docker/local/agent-admin-browser.cjs
-python docker/local/agent-smoke.py
-node docker/local/agent-browser.cjs
-python docker/local/smoke.py
+docker exec -w /workspace/frappe-bench crm-dev2-backend-1 bench --site crm.localhost run-tests --module crm.tests.test_agent_ui
+docker exec -w /workspace/frappe-bench crm-dev2-backend-1 bench --site crm.localhost run-tests --module crm.tests.test_agent_admin
+docker exec -w /workspace/frappe-bench crm-dev2-backend-1 bench --site crm.localhost run-tests --module crm.tests.test_productivity
+node docker/local/agent-native-browser.cjs
 ```
 
-See [local setup](../docker/local/README.md) and [implementation checklist](dev2-roadmap.md). Restore testing, production patch matching, cross-app staging checks and deployment approval remain open. No production data was accessed.
+The native UI suite covers role invitations, legacy-role migration, scoped native APIs, forged writes, extra roles, suspended access, staff delegation and handler replacement. Browser validation covers desktop/mobile lead and contact creation, follow-up tasks, personal calendar/My Day, API isolation, legacy redirects and administrator invitation controls. Older standalone-agent browser scripts describe the retired interface and are superseded by `agent-native-browser.cjs`.
 
-Administration browser validation: account creation, muted invitations, session/API-token revocation, blocked suspended login, successful reactivation with the same lead, old credentials remaining invalid, preserved administrator session, audit reasons and staff denial. The synthetic browser account is suspended after the check. Invitation generation is tested with mail delivery mocked; no real emails were sent.
+The original CRM Invitation suite cannot initialize because the local ERPNext fixture lacks the Payment Gateway DocType; focused invitation regressions run in `test_agent_ui`. No real invitation email has been sent. Separate Cloud staging, installed-app access auditing, actual email delivery, backup/restore and production patch matching remain release gates. See [roadmap](dev2-roadmap.md) and [local setup](../docker/local/README.md).

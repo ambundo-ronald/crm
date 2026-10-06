@@ -4,11 +4,11 @@ Available locally on dev2:
 
 - Staff and Administrator: **My calendar** in the CRM sidebar, or http://localhost:18000/crm/appointments.
 - Staff lead page: **Book appointment** opens the calendar with that lead selected.
-- Commission agents: http://localhost:18000/crm-agent, **My calendar**, or **Book meeting (no lead)**.
+- Agents: the same **My calendar** screen at http://localhost:18000/crm/appointments, scoped to their own permitted appointments.
 
 ## Meet someone before creating a lead
 
-1. Choose **Book appointment** in the staff calendar, or **Book meeting (no lead)** in the agent workspace.
+1. Choose **Book appointment** in My calendar and leave the lead unselected.
 2. Use a title such as "Introduction with walk-in visitor". A name, email address and lead are not required at booking time.
 3. Enter the start/end and optional location or meeting URL, then save.
 4. After the meeting, choose **Complete appointment**.
@@ -20,7 +20,7 @@ To book against an existing lead, use **Book appointment** on that lead instead.
 
 ## Calendar behavior
 
-The staff calendar has Google Calendar-inspired Month, Week, Day and Schedule views. Use the mini calendar, Today button and arrows to navigate. Click a date or half-hour slot to book; click an event for its details and actions. Search and status filters apply to the loaded period. Linked-lead meetings are blue, introductions purple, completed meetings green and cancelled meetings grey. The agent workspace retains its simpler day/week/31-day agenda. Open appointments can be edited/rescheduled, completed or cancelled. Cancelled/completed appointments remain visible as history.
+The shared CRM calendar has Google Calendar-inspired Month, Week, Day and Schedule views. Use the mini calendar, Today button and arrows to navigate. Click a date or half-hour slot to book; click an event for its details and actions. Search and status filters apply to the loaded period. Linked-lead meetings are blue, introductions purple, completed meetings green and cancelled meetings grey. Agents use these same views with server-enforced personal scope. Open appointments can be edited/rescheduled, completed or cancelled. Cancelled/completed appointments remain visible as history.
 
 All inputs and displayed times use the site's timezone shown on the page, even if your device uses another timezone. Ambiguous/nonexistent daylight-saving times are rejected. End must follow start, within seven days; new open appointments must start in the future.
 
@@ -90,6 +90,6 @@ Existing calendar design and agent workspace browser regressions also pass. The 
 
 My Calendar (all views, event states and booking/details dialogs), My Day, agent administration and ERPNext sync use the CRM appearance setting under **Settings > Preferences > Theme**. Native date, select and text controls follow the selected theme too.
 
-The standalone agent workspace has a **Theme** selector in its header: Light, Dark or System. It shares the browser's CRM preference, persists across reloads and follows operating-system changes when System is selected.
+Agents choose **Light**, **Dark** or **System** from their account menu in the original CRM interface. The preference persists across reloads and follows operating-system changes when System is selected.
 
-Run `node docker/local/theme-browser.cjs` to check light/dark surfaces and primary text contrast, calendar event colours and native controls, agent theme persistence/system switching and mobile width. This check reads local synthetic data without saving appointments or changing account access.
+The earlier `node docker/local/theme-browser.cjs` standalone-agent checks need adapting to the shared interface. That script was used to check light/dark surfaces and primary text contrast, calendar event colours and native controls, agent theme persistence/system switching and mobile width. This check reads local synthetic data without saving appointments or changing account access.
