@@ -9,7 +9,7 @@
         params: { leadId: row.name },
         query: { view: route.query.view, viewType: route.params.viewType },
       }),
-      selectable: options.selectable,
+      selectable: !isAgent && options.selectable,
       showTooltip: options.showTooltip,
       resizeColumn: options.resizeColumn,
     }"
@@ -254,6 +254,7 @@
 </template>
 
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import HeartIcon from '@/components/Icons/HeartIcon.vue'
 import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'

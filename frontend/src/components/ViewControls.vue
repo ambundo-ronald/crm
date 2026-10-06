@@ -55,7 +55,7 @@
             @update="updateKanbanSettings"
           />
           <ColumnSettings
-            v-else-if="!options.hideColumnsButton"
+            v-else-if="!isAgent && !options.hideColumnsButton"
             v-model="list"
             :doctype="doctype"
             :hideLabel="isMobileView"
@@ -199,13 +199,13 @@
           @update="updateKanbanSettings"
         />
         <ColumnSettings
-          v-else-if="!options.hideColumnsButton"
+          v-else-if="!isAgent && !options.hideColumnsButton"
           v-model="list"
           :doctype="doctype"
           @update="(isDefault) => updateColumns(isDefault)"
         />
         <Dropdown
-          v-if="route.params.viewType !== 'kanban' || isManager()"
+          v-if="!isAgent && (route.params.viewType !== 'kanban' || isManager())"
           placement="right"
           :options="[
             {
@@ -320,6 +320,7 @@
   />
 </template>
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import Icon from '@/components/Icon.vue'
 import ListIcon from '@/components/Icons/ListIcon.vue'
 import KanbanIcon from '@/components/Icons/KanbanIcon.vue'
@@ -763,6 +764,7 @@ function getIcon(icon, type) {
 }
 
 const viewsDropdownOptions = computed(() => {
+  if (isAgent) return []
   let _views = [
     {
       group: __('Standard Views'),
@@ -1377,6 +1379,7 @@ function reloadViewAfterSave() {
 }
 
 function createOrUpdateStandardView() {
+  if (isAgent) return
   if (route.query.view) return
   view.value.doctype = props.doctype
   call(
@@ -1429,6 +1432,7 @@ function updatePageLength(value, loadMore = false) {
 
 // View Actions
 const viewActions = (view, close) => {
+  if (isAgent) return []
   let isStandard = typeof view.name === 'string'
   let _view = getView(view.name)
 

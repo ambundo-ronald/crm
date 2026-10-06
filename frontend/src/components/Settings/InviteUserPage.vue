@@ -152,6 +152,8 @@ const description = computed(() => {
       'Can manage all aspects of the CRM, including user management, customizations and settings.',
     'Sales Manager':
       'Can manage and invite new users, and create public & private views (reports).',
+    Agent:
+      'Can access CRM only, with their own leads and permitted contacts. Cannot access ERPNext or other users’ data.',
     'Sales User':
       'Can work with leads and deals and create private views (reports).',
   }[role.value]
@@ -160,12 +162,14 @@ const description = computed(() => {
 const roleOptions = computed(() => {
   return [
     { value: 'Sales User', label: __('Sales User') },
+    { value: 'Agent', label: __('Agent') },
     ...(isAdmin() ? [{ value: 'Sales Manager', label: __('Manager') }] : []),
     ...(isAdmin() ? [{ value: 'System Manager', label: __('Admin') }] : []),
   ]
 })
 
 const roleMap = {
+  Agent: __('Agent'),
   'Sales User': __('Sales User'),
   'Sales Manager': __('Manager'),
   'System Manager': __('Admin'),

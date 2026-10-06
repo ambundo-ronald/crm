@@ -3,7 +3,7 @@ import { timestampCell } from '@/composables/useTimelinePreferences'
 import { getMeta } from '@/stores/meta'
 
 const { getFormattedPercent, getFormattedFloat, getFormattedCurrency } =
-  getMeta('CRM Call Log')
+  window.is_agent ? {} : getMeta('CRM Call Log')
 
 export function getCallLogDetail(row, log, columns = []) {
   let incoming = log.type === 'Incoming'

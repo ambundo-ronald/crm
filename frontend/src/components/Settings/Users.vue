@@ -82,6 +82,7 @@
           class="shrink-0"
           :options="[
             { label: __('All'), value: 'All' },
+            { label: __('Agent'), value: 'Agent' },
             { label: __('Admin'), value: 'System Manager' },
             { label: __('Manager'), value: 'Sales Manager' },
             { label: __('Sales User'), value: 'Sales User' },
@@ -190,6 +191,7 @@ const search = ref('')
 const currentRole = ref('All')
 
 const roleMap = {
+  Agent: __('Agent'),
   'System Manager': __('Admin'),
   'Sales Manager': __('Manager'),
   'Sales User': __('Sales User'),
@@ -214,6 +216,15 @@ const usersList = computed(() => {
 const confirmRemove = ref(false)
 
 function getMoreOptions(user) {
+  if (user.role === 'Agent')
+    return isAdmin()
+      ? [
+          {
+            label: __('Manage agent access'),
+            onClick: () => (activeSettingsPage.value = 'Agents'),
+          },
+        ]
+      : []
   return [
     ...ConfirmDelete({
       onConfirmDelete: () => removeUser(user),
@@ -224,6 +235,7 @@ function getMoreOptions(user) {
 }
 
 function getDropdownOptions(user) {
+  if (user.role === 'Agent') return []
   let options = [
     {
       label: __('Admin'),

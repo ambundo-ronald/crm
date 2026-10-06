@@ -72,6 +72,7 @@
   </div>
 </template>
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import MultiActionButton from '@/components/MultiActionButton.vue'
 import Email2Icon from '@/components/Icons/Email2Icon.vue'
 import CommentIcon from '@/components/Icons/CommentIcon.vue'
@@ -104,6 +105,14 @@ const showFilesUploader = defineModel('showFilesUploader', { type: Boolean })
 const emailBox = defineModel('emailBox', { type: Object, default: () => ({}) })
 
 const defaultActions = computed(() => {
+  if (isAgent)
+    return [
+      {
+        icon: h(TaskIcon),
+        label: __('Task'),
+        onClick: () => props.modalRef.showTask(),
+      },
+    ]
   let actions = [
     {
       icon: h(Email2Icon, { class: 'h-4 w-4' }),
@@ -158,6 +167,14 @@ function getTabIndex(name) {
 }
 
 const callActions = computed(() => {
+  if (isAgent)
+    return [
+      {
+        icon: h(TaskIcon),
+        label: __('Task'),
+        onClick: () => props.modalRef.showTask(),
+      },
+    ]
   let actions = [
     {
       label: __('Log a Call'),

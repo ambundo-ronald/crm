@@ -5,7 +5,7 @@
     :rows="rows"
     :options="{
       onRowClick: (row) => emit('showTask', row.name),
-      selectable: options.selectable,
+      selectable: !isAgent && options.selectable,
       showTooltip: options.showTooltip,
       resizeColumn: options.resizeColumn,
     }"
@@ -184,6 +184,7 @@
   />
 </template>
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import HeartIcon from '@/components/Icons/HeartIcon.vue'
 import TaskStatusIcon from '@/components/Icons/TaskStatusIcon.vue'
 import TaskPriorityIcon from '@/components/Icons/TaskPriorityIcon.vue'

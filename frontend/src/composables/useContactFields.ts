@@ -146,6 +146,7 @@ export function useContactFields(contact: ContactDocument) {
       showAddressModal,
     }: { showAddressModal?: (address?: string) => void } = {},
   ): SidePanelField {
+    if (window.is_agent) return field
     if (field.fieldname === 'email_id') {
       return {
         ...field,

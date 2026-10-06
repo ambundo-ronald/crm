@@ -122,7 +122,7 @@ class TestAgentAdmin(IntegrationTestCase):
 			self.assertEqual(result, {"status": "Invitation requested"})
 			doc = frappe.get_doc("User", self.email)
 			self.assertTrue(doc.reset_password_key)
-			self.assertEqual(doc.redirect_url, "/crm-agent")
+			self.assertEqual(doc.redirect_url, "/crm")
 			with self.assertRaises(frappe.ValidationError):
 				admin.invite_agent(self.email, self.modified())
 		self.change(False)

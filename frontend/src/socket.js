@@ -2,6 +2,7 @@ import { io } from 'socket.io-client'
 import { getCachedListResource, getCachedResource } from 'frappe-ui'
 
 export function initSocket() {
+  if (window.is_agent) return { on() {}, off() {}, emit() {}, connected: false }
   let socketio_port = window.socketio_port || 9000
   let host = window.location.hostname
   let siteName = window.site_name

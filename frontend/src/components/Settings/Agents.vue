@@ -12,45 +12,16 @@
     </p>
     <p v-if="error" role="alert" class="text-ink-red-5">{{ error }}</p>
     <p v-if="message" role="status">{{ message }}</p>
-    <form class="space-y-3 rounded border p-4" @submit.prevent="create">
-      <h3 class="font-medium">{{ __('Create agent account') }}</h3>
-      <div class="grid gap-3 sm:grid-cols-2">
-        <label class="text-sm"
-          >{{ __('First name')
-          }}<input
-            v-model="firstName"
-            required
-            maxlength="140"
-            class="mt-1 w-full rounded border p-2"
-        /></label>
-        <label class="text-sm"
-          >{{ __('Last name')
-          }}<input
-            v-model="lastName"
-            maxlength="140"
-            class="mt-1 w-full rounded border p-2"
-        /></label>
-      </div>
-      <label class="block text-sm"
-        >{{ __('Agent email')
-        }}<input
-          v-model="email"
-          required
-          type="email"
-          maxlength="140"
-          class="mt-1 w-full rounded border p-2"
-      /></label>
-      <p class="text-sm text-ink-gray-6">
-        {{
-          __(
-            'Creates a new restricted account without sending email. Existing staff accounts cannot be converted here. Send a setup email separately when ready.',
-          )
-        }}
-      </p>
-      <Button type="submit" variant="solid" :disabled="busy">{{
-        __('Create agent')
-      }}</Button>
-    </form>
+    <Button variant="solid" @click="activeSettingsPage = 'Invite User'">{{
+      __('Invite an Agent')
+    }}</Button>
+    <p class="text-sm text-ink-gray-6">
+      {{
+        __(
+          'Use Invite User and select Agent. Agents use the standard CRM interface with restricted data access.',
+        )
+      }}
+    </p>
     <p v-if="data?.mail_muted" class="rounded bg-surface-amber-1 p-3 text-sm">
       {{
         __(
@@ -177,16 +148,14 @@
 </template>
 <script setup>
 import { onMounted, ref } from 'vue'
+import { activeSettingsPage } from '@/composables/settings'
 import { Button, call } from 'frappe-ui'
 const api = 'crm.api.agent_admin.'
 const data = ref(null),
   busy = ref(false),
   error = ref(''),
   message = ref('')
-const firstName = ref(''),
-  lastName = ref(''),
-  email = ref(''),
-  search = ref('')
+const search = ref('')
 const selected = ref(null),
   action = ref(''),
   reason = ref(''),
@@ -212,21 +181,6 @@ async function load(after = '') {
   await perform(async () => {
     selected.value = null
     await refresh(after)
-  })
-}
-async function create() {
-  await perform(async () => {
-    const result = await call(api + 'create_agent', {
-      email: email.value,
-      first_name: firstName.value,
-      last_name: lastName.value,
-    })
-    search.value = result.name
-    firstName.value = ''
-    lastName.value = ''
-    email.value = ''
-    await refresh()
-    message.value = __('Agent created. No email has been sent.')
   })
 }
 function select(agent, kind) {

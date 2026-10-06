@@ -160,9 +160,10 @@ async function createNewLead() {
         show.value = false
         lead.doc = {}
         router.push({ name: 'Lead', params: { leadId: data.name } })
-        updateOnboardingStep('create_first_lead', true, false, () => {
-          localStorage.setItem('firstLead' + user, data.name)
-        })
+        if (!window.is_agent)
+          updateOnboardingStep('create_first_lead', true, false, () => {
+            localStorage.setItem('firstLead' + user, data.name)
+          })
       },
       onError(err) {
         isLeadCreating.value = false
@@ -183,10 +184,10 @@ function openQuickEntryModal() {
 }
 
 onMounted(() => {
-  lead.doc.no_of_employees = '1-10'
+  if (!window.is_agent) lead.doc.no_of_employees = '1-10'
   Object.assign(lead.doc, props.defaults)
 
-  if (!lead.doc?.lead_owner) {
+  if (!window.is_agent && !lead.doc?.lead_owner) {
     lead.doc.lead_owner = getUser().name
   }
   if (!lead.doc?.status && leadStatuses.value[0]?.value) {

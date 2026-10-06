@@ -146,6 +146,12 @@ def update_user_role(user: str, new_role: str):
 	if new_role not in ["System Manager", "Sales Manager", "Sales User"]:
 		frappe.throw(_("Cannot assign this role"))
 
+	from crm.permissions.commission_agent import is_agent
+
+	if is_agent(user):
+		frappe.throw(
+			_("Manage agent access using suspension and reactivation in Settings."), frappe.PermissionError
+		)
 	user_doc = frappe.get_doc("User", user)
 	validate_no_role_profile(user_doc)
 	target_roles = [d.role for d in user_doc.roles]
@@ -194,6 +200,12 @@ def remove_crm_roles_from_user(user: str):
 	if user == frappe.session.user:
 		frappe.throw(_("You cannot remove yourself."), frappe.PermissionError)
 
+	from crm.permissions.commission_agent import is_agent
+
+	if is_agent(user):
+		frappe.throw(
+			_("Manage agent access using suspension and reactivation in Settings."), frappe.PermissionError
+		)
 	user_doc = frappe.get_doc("User", user)
 	roles = [d.role for d in user_doc.roles]
 

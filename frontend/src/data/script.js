@@ -11,6 +11,7 @@ const fileScriptModules = import.meta.glob('../doctypes/*/*.js')
 const fileScriptCache = {}
 
 async function loadFileScript(doctype, view) {
+  if (window.is_agent) return null
   const key = `${doctype}:${view}`
   if (key in fileScriptCache) return fileScriptCache[key]
 

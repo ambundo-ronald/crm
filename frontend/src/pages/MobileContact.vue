@@ -27,6 +27,7 @@
               />
               <component
                 :is="contact.doc.image ? Dropdown : 'div'"
+                v-if="!isAgent"
                 v-bind="
                   contact.doc.image
                     ? {
@@ -159,6 +160,7 @@
 </template>
 
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import Icon from '@/components/Icon.vue'
 import SidePanelLayout from '@/components/SidePanelLayout.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
@@ -310,13 +312,13 @@ const tabs = [
     icon: h(DealsIcon, { class: 'h-4 w-4' }),
     count: computed(() => deals.data?.length),
   },
-]
+].filter((tab) => !isAgent || tab.name === 'Details')
 
 const deals = createResource({
   url: 'crm.api.contact.get_linked_deals',
   cache: ['deals', props.contactId],
   params: { contact: props.contactId },
-  auto: true,
+  auto: !isAgent,
 })
 
 const rows = computed(() => {
@@ -345,7 +347,7 @@ function getParsedSections(_sections) {
   })
 }
 
-const { getFormattedCurrency } = getMeta('CRM Deal')
+const { getFormattedCurrency } = isAgent ? {} : getMeta('CRM Deal')
 
 const columns = computed(() => dealColumns)
 

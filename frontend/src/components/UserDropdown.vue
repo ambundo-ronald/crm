@@ -55,7 +55,7 @@ import { getSettings } from '@/stores/settings'
 import { showSettings, isMobileView } from '@/composables/settings'
 import { showAboutModal } from '@/composables/modals'
 import { confirmLoginToFrappeCloud } from '@/composables/frappecloud'
-import { createResource, Dropdown } from 'frappe-ui'
+import { createResource, Dropdown, useTheme } from 'frappe-ui'
 import { computed, h, markRaw } from 'vue'
 
 defineProps({
@@ -64,6 +64,7 @@ defineProps({
 
 const { settings, brand } = getSettings()
 const { logout } = sessionStore()
+const { setTheme } = useTheme()
 const { getUser } = usersStore()
 
 const user = computed(() => getUser() || {})
@@ -76,6 +77,13 @@ const apps = createResource({
 })
 
 const dropdownItems = computed(() => {
+  if (window.is_agent)
+    return [
+      { label: __('Light theme'), onClick: () => setTheme('light') },
+      { label: __('Dark theme'), onClick: () => setTheme('dark') },
+      { label: __('System theme'), onClick: () => setTheme('system') },
+      { label: __('Log out'), icon: 'log-out', onClick: () => logout.submit() },
+    ]
   if (!settings.value?.dropdown_items) return []
 
   let items = settings.value.dropdown_items

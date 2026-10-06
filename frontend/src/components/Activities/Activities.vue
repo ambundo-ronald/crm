@@ -405,7 +405,7 @@
   </FadedScrollableDiv>
   <div>
     <CommunicationArea
-      v-if="['Emails', 'Comments', 'Activity'].includes(title)"
+      v-if="!isAgent && ['Emails', 'Comments', 'Activity'].includes(title)"
       ref="emailBox"
       v-model="doc"
       v-model:reload="reload_email"
@@ -447,6 +447,7 @@
   />
 </template>
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import ActivityHeader from '@/components/Activities/ActivityHeader.vue'
 import EmailArea from '@/components/Activities/EmailArea.vue'
 import CommentArea from '@/components/Activities/CommentArea.vue'

@@ -11,7 +11,7 @@ export function useVisitedRecords(doctype: string) {
   }
 
   function markVisited(name?: string) {
-    if (!name) return
+    if (!name || window.is_agent) return
     call('crm.api.doc.add_seen', { doctype, name })
   }
 

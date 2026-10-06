@@ -337,7 +337,7 @@ const { showModal } = useDoctypeModal()
 const taskCallbacks = {
   afterInsert: () => {
     tasks.value.reload()
-    updateOnboardingStep('create_first_task')
+    if (!window.is_agent) updateOnboardingStep('create_first_task')
     capture('task_created')
   },
   afterUpdate: () => {

@@ -561,10 +561,13 @@ const field = computed(() => {
       field.mandatory_depends_on,
       data.value,
     ),
-    read_only: effectiveReadOnly,
+    read_only:
+      (window.is_agent && data.value.__agent_read_only) || effectiveReadOnly,
     // separate from read_only because isFieldVisible hides empty read-only fields
     disabled: Boolean(
-      effectiveReadOnly || isFetchedFromLink(field, data.value),
+      (window.is_agent && data.value.__agent_read_only) ||
+      effectiveReadOnly ||
+      isFetchedFromLink(field, data.value),
     ),
   }
 

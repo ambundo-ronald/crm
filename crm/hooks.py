@@ -1,3 +1,6 @@
+from crm.api.agent_ui import CONTRACTS as _AGENT_UI_CONTRACTS
+from crm.api.agent_ui import override_name as _agent_ui_override_name
+
 app_name = "crm"
 app_title = "Frappe CRM"
 app_publisher = "Frappe Technologies Pvt. Ltd."
@@ -401,7 +404,11 @@ ignore_links_on_delete = ["Failed Lead Sync Log"]
 # "crm.auth.validate"
 # ]
 
-role_home_page = {"Commission Agent": "crm-agent"}
+role_home_page = {"Agent": "crm", "Commission Agent": "crm"}
+
+override_whitelisted_methods = {
+	method: "crm.api.agent_ui." + _agent_ui_override_name(method) for method in _AGENT_UI_CONTRACTS
+}
 
 auth_hooks = ["crm.permissions.commission_agent.restrict_request"]
 

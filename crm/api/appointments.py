@@ -14,6 +14,10 @@ from crm.permissions.commission_agent import is_agent
 
 
 def require_user():
+	if is_agent():
+		from crm.permissions.commission_agent import require_agent
+
+		return require_agent()
 	if frappe.session.user == "Guest" or not check_app_permission():
 		deny()
 	return frappe.session.user

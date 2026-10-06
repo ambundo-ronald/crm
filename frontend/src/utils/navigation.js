@@ -26,6 +26,9 @@ export const navigationItems = [
 
 export function getNavigationItems({ mobile = false } = {}) {
   return navigationItems.filter(
-    (item) => router.hasRoute(item.route) && (!mobile || !item.desktopOnly),
+    (item) =>
+      router.hasRoute(item.route) &&
+      (!mobile || !item.desktopOnly) &&
+      (!window.is_agent || ['Leads', 'Contacts', 'Tasks'].includes(item.route)),
   )
 }

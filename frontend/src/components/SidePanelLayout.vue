@@ -571,7 +571,8 @@ function parsedField(field) {
       field.mandatory_depends_on,
       doc.value,
     ),
-    read_only: effectiveReadOnly,
+    read_only:
+      (window.is_agent && doc.value.__agent_read_only) || effectiveReadOnly,
   }
 
   _field.visible = isFieldVisible(_field, overrides?.hidden)

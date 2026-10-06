@@ -84,7 +84,7 @@ function afterDoctype(d, isInsert = false) {
   }
 
   if (isInsert) {
-    updateOnboardingStep('create_first_' + name)
+    if (!window.is_agent) updateOnboardingStep('create_first_' + name)
     capture(name + '_created')
   } else {
     capture(name + '_updated')

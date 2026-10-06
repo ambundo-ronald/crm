@@ -22,14 +22,20 @@
         @click="$router.push({ name: 'Appointments', query: { lead: leadId } })"
       />
       <EnrichFromWebsite
+        v-if="!isAgent"
         doctype="CRM Lead"
         :docname="leadId"
         :website="doc.website"
         @done="onEnriched"
       />
-      <AssignTo v-model="assignees.data" doctype="CRM Lead" :docname="leadId" />
+      <AssignTo
+        v-if="!isAgent"
+        v-model="assignees.data"
+        doctype="CRM Lead"
+        :docname="leadId"
+      />
       <Dropdown
-        v-if="doc && document.statuses"
+        v-if="doc && (document.statuses || isAgent) && !doc.converted"
         :options="statuses"
         placement="right"
       >
@@ -46,6 +52,7 @@
         </template>
       </Dropdown>
       <Tooltip
+        v-if="!isAgent"
         :disabled="!isLeadConversionDisabled"
         :text="__('Cannot convert a lost lead to deal')"
       >
@@ -101,6 +108,7 @@
               />
               <component
                 :is="doc.image ? Dropdown : 'div'"
+                v-if="!isAgent"
                 v-bind="
                   doc.image
                     ? {
@@ -156,6 +164,7 @@
                 />
 
                 <Button
+                  v-if="!isAgent"
                   :tooltip="__('Send an Email')"
                   :icon="Email2Icon"
                   @click="
@@ -253,6 +262,7 @@
   />
 </template>
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
 import Icon from '@/components/Icon.vue'
@@ -442,6 +452,8 @@ const statuses = computed(() => {
 useCommandPaletteContext(() => leadCommands())
 
 function leadCommands() {
+  if (isAgent)
+    return doc.value.converted ? [] : [statusCommand(), ...flatStatusCommands()]
   const commands = [
     statusCommand(),
     ...flatStatusCommands(),
@@ -617,7 +629,11 @@ const tabs = computed(() => {
       condition: () => whatsappEnabled.value,
     },
   ]
-  return tabOptions.filter((tab) => (tab.condition ? tab.condition() : true))
+  return tabOptions.filter(
+    (tab) =>
+      (!isAgent || ['Activity', 'Data', 'Tasks'].includes(tab.name)) &&
+      (tab.condition ? tab.condition() : true),
+  )
 })
 
 const { tabIndex, changeTabTo } = useActiveTabManager(tabs, 'lastLeadTab')

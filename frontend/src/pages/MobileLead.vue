@@ -10,7 +10,7 @@
       </Breadcrumbs>
       <div class="absolute right-0">
         <Dropdown
-          v-if="doc"
+          v-if="doc && !(isAgent && doc.converted)"
           :options="
             statusOptions(
               'lead',
@@ -40,8 +40,18 @@
     v-if="doc.name"
     class="flex h-12 items-center justify-between gap-2 border-b px-3 py-2.5"
   >
-    <AssignTo v-model="assignees.data" doctype="CRM Lead" :docname="leadId" />
+    <AssignTo
+      v-if="!isAgent"
+      v-model="assignees.data"
+      doctype="CRM Lead"
+      :docname="leadId"
+    />
     <div class="flex items-center gap-2">
+      <Button
+        v-if="isAgent"
+        :label="__('Book appointment')"
+        @click="$router.push({ name: 'Appointments', query: { lead: leadId } })"
+      />
       <CustomActions
         v-if="document._actions?.length"
         :actions="document._actions"
@@ -51,6 +61,7 @@
         :actions="document.actions"
       />
       <Tooltip
+        v-if="!isAgent"
         :disabled="!isLeadConversionDisabled"
         :text="__('Cannot convert a lost lead to deal')"
       >
@@ -132,6 +143,7 @@
   />
 </template>
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import DeleteLinkedDocModal from '@/components/DeleteLinkedDocModal.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
 import Icon from '@/components/Icon.vue'
@@ -348,7 +360,12 @@ const tabs = computed(() => {
       condition: () => whatsappEnabled.value,
     },
   ]
-  return tabOptions.filter((tab) => (tab.condition ? tab.condition() : true))
+  return tabOptions.filter(
+    (tab) =>
+      (!isAgent ||
+        ['Details', 'Activity', 'Data', 'Tasks'].includes(tab.name)) &&
+      (tab.condition ? tab.condition() : true),
+  )
 })
 
 const { tabIndex } = useActiveTabManager(tabs, 'lastLeadTab')

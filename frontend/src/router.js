@@ -182,6 +182,26 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
+  if (isLoggedIn && window.is_agent) {
+    if (
+      ![
+        'Leads',
+        'Lead',
+        'Contacts',
+        'Contact',
+        'Tasks',
+        'MyDay',
+        'Appointments',
+      ].includes(to.name)
+    )
+      return next({ name: 'Leads' })
+    if (
+      ['Leads', 'Contacts', 'Tasks'].includes(to.name) &&
+      (to.params.viewType !== 'list' || to.query.view)
+    )
+      return next({ name: to.name, params: { viewType: 'list' } })
+  }
+
   const isAdminUser = isLoggedIn && (isAdmin() || user === 'Administrator')
 
   // Only admins who haven't finished may reach the wizard, even via direct URL.

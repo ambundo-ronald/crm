@@ -50,6 +50,7 @@
             </Button>
           </Dropdown>
           <Dropdown
+            v-if="!isAgent"
             :options="[
               {
                 label: __('Delete'),
@@ -91,6 +92,7 @@
   </div>
 </template>
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import CalendarIcon from '@/components/Icons/CalendarIcon.vue'
 import TaskStatusIcon from '@/components/Icons/TaskStatusIcon.vue'
 import TaskPriorityIcon from '@/components/Icons/TaskPriorityIcon.vue'

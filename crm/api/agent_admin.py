@@ -120,7 +120,7 @@ def create_agent(email: str, first_name: str, last_name: str = ""):
 			"enabled": 1,
 			"user_type": "Website User",
 			"send_welcome_email": 0,
-			"redirect_url": "/crm-agent",
+			"redirect_url": "/crm",
 			"roles": [{"role": ROLE}],
 		}
 	).insert(ignore_permissions=True)
@@ -176,7 +176,7 @@ def invite_agent(user: str, modified: str):
 	):
 		frappe.throw("Wait at least one minute before requesting another setup email")
 	# Use Frappe's expiring password setup flow; never expose the key or password.
-	doc.db_set("redirect_url", "/crm-agent")
+	doc.db_set("redirect_url", "/crm")
 	log(doc, "Invitation requested", "Administrator requested a password setup email", doc.enabled)
 	doc.validate_reset_password()
 	doc._reset_password(send_email=True)

@@ -37,6 +37,7 @@
                   />
                   <component
                     :is="contact.doc.image ? Dropdown : 'div'"
+                    v-if="!isAgent"
                     v-bind="
                       contact.doc.image
                         ? {
@@ -120,6 +121,7 @@
       </div>
     </Resizer>
     <Tabs
+      v-if="!isAgent"
       v-model="tabIndex"
       as="div"
       :tabs="tabs"
@@ -170,6 +172,7 @@
 </template>
 
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import ErrorPage from '@/components/ErrorPage.vue'
 import Resizer from '@/components/Resizer.vue'
 import Icon from '@/components/Icon.vue'
@@ -311,7 +314,7 @@ const deals = createResource({
   url: 'crm.api.contact.get_linked_deals',
   cache: ['deals', props.contactId],
   params: { contact: props.contactId },
-  auto: true,
+  auto: !isAgent,
 })
 
 const rows = computed(() => {
@@ -353,7 +356,7 @@ const fieldPlaceholderMap = {
   company_name: __('Add Organization...'),
 }
 
-const { getFormattedCurrency } = getMeta('CRM Deal')
+const { getFormattedCurrency } = isAgent ? {} : getMeta('CRM Deal')
 
 const columns = computed(() => dealColumns)
 

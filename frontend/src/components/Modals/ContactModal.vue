@@ -141,14 +141,14 @@ async function createContact() {
     return
   }
 
-  if (_contact.doc.email_id) {
+  if (!window.is_agent && _contact.doc.email_id) {
     _contact.doc.email_ids = [
       { email_id: _contact.doc.email_id, is_primary: 1 },
     ]
     delete _contact.doc.email_id
   }
 
-  if (_contact.doc.mobile_no) {
+  if (!window.is_agent && _contact.doc.mobile_no) {
     _contact.doc.phone_nos = [
       { phone: _contact.doc.mobile_no, is_primary_mobile_no: 1 },
     ]

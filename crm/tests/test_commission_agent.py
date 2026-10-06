@@ -23,7 +23,7 @@ class TestCommissionAgent(IntegrationTestCase):
 						"first_name": "Agent",
 						"user_type": "Website User",
 						"send_welcome_email": 0,
-						"roles": [{"role": "Commission Agent"}],
+						"roles": [{"role": "Agent"}],
 					}
 				).insert(ignore_permissions=True)
 		cls.staff = "permission.sales@example.invalid"
@@ -149,7 +149,7 @@ class TestCommissionAgent(IntegrationTestCase):
 	def test_role_revocation(self):
 		frappe.set_user("Administrator")
 		user = frappe.get_doc("User", self.a)
-		user.remove_roles("Commission Agent")
+		user.remove_roles("Agent")
 		frappe.clear_cache(user=self.a)
 		frappe.set_user(self.a)
 		with self.assertRaises(frappe.PermissionError):

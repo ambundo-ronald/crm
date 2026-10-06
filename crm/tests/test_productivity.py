@@ -26,7 +26,7 @@ class TestProductivity(IntegrationTestCase):
 						"first_name": "Productivity",
 						"user_type": "System User" if email == cls.staff else "Website User",
 						"send_welcome_email": 0,
-						"roles": [{"role": "Sales User" if email == cls.staff else "Commission Agent"}],
+						"roles": [{"role": "Sales User" if email == cls.staff else "Agent"}],
 					}
 				).insert(ignore_permissions=True)
 		frappe.db.commit()

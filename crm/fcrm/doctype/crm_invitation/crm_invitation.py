@@ -22,7 +22,7 @@ class CRMInvitation(Document):
 		email_sent_at: DF.Datetime | None
 		invited_by: DF.Link | None
 		key: DF.Data | None
-		role: DF.Literal["", "Sales User", "Sales Manager", "System Manager"]
+		role: DF.Literal["", "Sales User", "Sales Manager", "System Manager", "Agent"]
 		status: DF.Literal["", "Pending", "Accepted", "Expired"]
 	# end: auto-generated types
 
@@ -65,8 +65,17 @@ class CRMInvitation(Document):
 		if self.status != "Pending":
 			frappe.throw(_("Invalid or expired key"))
 
+		# Never turn an existing staff account into an external agent through an invite.
+		if self.role == "Agent" and frappe.db.exists("User", self.email):
+			frappe.throw(
+				_("This account already exists. Manage its access in Settings."), frappe.PermissionError
+			)
 		user, is_new_user = self.create_user_if_not_exists()
 		if not is_new_user:
+			from crm.permissions.commission_agent import is_agent
+
+			if is_agent(user.name):
+				frappe.throw(_("Manage agent access in Settings."), frappe.PermissionError)
 			validate_no_role_profile(user)
 		user.append_roles(self.role)
 		if self.role == "System Manager":
@@ -76,6 +85,15 @@ class CRMInvitation(Document):
 		if self.role == "Sales User":
 			self.update_module_in_user(user, "FCRM")
 		user.save(ignore_permissions=True)
+		if self.role == "Agent":
+			from crm.api.agent_admin import log, profile_issues
+
+			if profile_issues(user):
+				frappe.throw(
+					_("Site defaults added incompatible roles. Review agent provisioning."),
+					frappe.PermissionError,
+				)
+			log(user, "Created", "Agent joined through CRM invitation", 0)
 
 		self.status = "Accepted"
 		self.accepted_at = frappe.utils.now()
@@ -104,11 +122,12 @@ class CRMInvitation(Document):
 			first_name = self.email.split("@")[0].title()
 			user = frappe.get_doc(
 				doctype="User",
-				user_type="System User",
+				user_type="Website User" if self.role == "Agent" else "System User",
 				email=self.email,
 				send_welcome_email=0,
 				first_name=first_name,
 				default_app="crm",
+				redirect_url="/crm" if self.role == "Agent" else None,
 			).insert(ignore_permissions=True)
 			return user, True
 

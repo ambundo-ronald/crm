@@ -23,6 +23,7 @@
              pad the content back in so the shadow has room. -->
         <div class="-mx-2 mt-2 flex flex-1 flex-col gap-1 overflow-y-auto px-2">
           <SidebarItem
+            v-if="!isAgent"
             id="notifications-btn"
             :label="__('Notifications')"
             :to="mobile ? { name: 'Notifications' } : undefined"
@@ -112,7 +113,10 @@
           </CollapsibleSection>
         </div>
 
-        <div v-if="!mobile" class="mt-auto flex flex-col gap-1 pt-2">
+        <div
+          v-if="!mobile && !isAgent"
+          class="mt-auto flex flex-col gap-1 pt-2"
+        >
           <div class="mb-1 flex flex-col gap-2">
             <SignupBanner
               v-if="isDemoSite"
@@ -162,10 +166,10 @@
         </div>
       </div>
     </Sidebar>
-    <Notifications v-if="!mobile" />
+    <Notifications v-if="!mobile && !isAgent" />
   </div>
 
-  <template v-if="!mobile">
+  <template v-if="!mobile && !isAgent">
     <Settings />
     <HelpModal
       v-if="showHelpModal"
@@ -186,6 +190,7 @@
 </template>
 
 <script setup>
+const isAgent = Boolean(window.is_agent)
 import BrushCleaningIcon from '~icons/lucide/brush-cleaning'
 import CRMLogo from '@/components/Icons/CRMLogo.vue'
 import InviteIcon from '@/components/Icons/InviteIcon.vue'
@@ -407,6 +412,7 @@ const { isOnboardingStepsCompleted, setUp } = useOnboarding('frappecrm')
 const ONBOARDING_KEY = 'frappecrm_onboarding_status'
 
 async function reconcileOnboarding(currentSteps) {
+  if (isAgent) return
   // `user` is the unwrapped session user id string (Pinia unwraps the ref on
   // destructure) — the same key the composable uses. Not user.value.
   let store
@@ -680,7 +686,7 @@ const steps = reactive([
 ])
 
 onMounted(async () => {
-  if (props.mobile) return
+  if (props.mobile || isAgent) return
 
   await users.promise
 

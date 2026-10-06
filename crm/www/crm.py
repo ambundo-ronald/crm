@@ -64,6 +64,9 @@ def get_context_for_dev():
 
 
 def get_boot():
+	from crm.permissions.commission_agent import is_agent
+
+	agent = is_agent()
 	return frappe._dict(
 		{
 			"frappe_version": frappe.__version__,
@@ -73,7 +76,20 @@ def get_boot():
 			"read_only_mode": frappe.flags.read_only,
 			"csrf_token": frappe.sessions.get_csrf_token(),
 			"setup_complete": cint(frappe.get_system_settings("setup_complete")),
-			"sysdefaults": frappe.defaults.get_defaults(),
+			"is_agent": agent,
+			"sysdefaults": {
+				key: frappe.defaults.get_defaults().get(key)
+				for key in (
+					"date_format",
+					"time_format",
+					"number_format",
+					"float_precision",
+					"currency_precision",
+					"hide_empty_read_only_fields",
+				)
+			}
+			if agent
+			else frappe.defaults.get_defaults(),
 			"is_demo_site": frappe.conf.get("is_demo_site"),
 			"demo_data_created": frappe.db.get_default("crm_demo_data_created") == "1",
 			"is_fc_site": is_fc_site(),
