@@ -57,7 +57,13 @@
       <div class="calendar-legend">
         <h2>{{ __('Show appointments') }}</h2>
         <label
-          v-for="status in ['Open', 'Completed', 'Cancelled']"
+          v-for="status in [
+            'Open',
+            'Completed',
+            'Cancelled',
+            'Closed',
+            'Unverified',
+          ]"
           :key="status"
           ><input v-model="visibleStatuses" type="checkbox" :value="status" />{{
             __(status)
@@ -282,6 +288,13 @@
                   :class="eventClass(row)"
                 >
                   <h2>{{ row.subject }}</h2>
+                  <p v-if="row.read_only">
+                    {{
+                      __(
+                        'ERPNext appointment: read-only. Update it in ERPNext.',
+                      )
+                    }}
+                  </p>
                   <p>
                     {{ row.starts_on }} - {{ row.ends_on }} ·
                     {{ __(row.status) }}
@@ -301,7 +314,7 @@
                           params: { leadId: row.reference_docname },
                         })
                       "
-                    /><template v-if="row.status === 'Open'"
+                    /><template v-if="!row.read_only && row.status === 'Open'"
                       ><Button
                         :label="__('Reschedule / edit')"
                         @click="edit(row)" /><Button
@@ -313,7 +326,9 @@
                         @click="setStatus(row, 'Cancelled')" /></template
                     ><Button
                       v-if="
-                        !row.reference_docname && row.status === 'Completed'
+                        !row.read_only &&
+                        !row.reference_docname &&
+                        row.status === 'Completed'
                       "
                       :label="__('Create lead from meeting')"
                       @click="convert(row)"
@@ -331,7 +346,10 @@
       :aria-label="__('Appointment details')"
     >
       <template v-if="detailRow"
-        ><div class="detail-top">
+        ><p v-if="detailRow.read_only">
+          {{ __('ERPNext appointment: read-only. Update it in ERPNext.') }}
+        </p>
+        <div class="detail-top">
           <span class="status-pill" :class="eventClass(detailRow)">{{
             __(detailRow.status)
           }}</span
@@ -354,7 +372,7 @@
                 params: { leadId: detailRow.reference_docname },
               })
             "
-          /><template v-if="detailRow.status === 'Open'"
+          /><template v-if="!detailRow.read_only && detailRow.status === 'Open'"
             ><Button
               :label="__('Reschedule / edit')"
               @click="edit(detailRow)" /><Button
@@ -366,7 +384,9 @@
               @click="setStatus(detailRow, 'Cancelled')" /></template
           ><Button
             v-if="
-              !detailRow.reference_docname && detailRow.status === 'Completed'
+              !detailRow.read_only &&
+              !detailRow.reference_docname &&
+              detailRow.status === 'Completed'
             "
             :label="__('Create lead from meeting')"
             @click="convert(detailRow)"
@@ -477,7 +497,13 @@ const appointments = ref([])
 const date = ref(new Date().toISOString().slice(0, 10))
 const view = ref('Month')
 const search = ref('')
-const visibleStatuses = ref(['Open', 'Completed', 'Cancelled'])
+const visibleStatuses = ref([
+  'Open',
+  'Completed',
+  'Cancelled',
+  'Closed',
+  'Unverified',
+])
 const today = ref(date.value)
 const detail = ref(null)
 const detailRow = ref(null)

@@ -1,0 +1,26 @@
+{
+ "doctype": "DocType",
+ "name": "CRM ERPNext Appointment Link",
+ "module": "FCRM",
+ "engine": "InnoDB",
+ "autoname": "hash",
+ "field_order": [
+  "appointment"
+ ],
+ "fields": [
+  {
+   "fieldname": "appointment",
+   "label": "ERPNext Appointment",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "unique": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1
+  }
+ ],
+ "track_changes": 1
+}

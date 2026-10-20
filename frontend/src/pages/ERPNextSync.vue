@@ -10,6 +10,7 @@
         }}
       </p>
       <p v-if="error" role="alert" class="text-ink-red-5">{{ error }}</p>
+      <ERPNextAppointmentSync v-if="data?.available" />
       <template v-if="data">
         <p v-if="!data.available">
           {{ __('ERPNext must be installed on this site.') }}
@@ -206,6 +207,7 @@
 </template>
 
 <script setup>
+import ERPNextAppointmentSync from '@/components/ERPNextAppointmentSync.vue'
 import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { showSettings } from '@/composables/settings'

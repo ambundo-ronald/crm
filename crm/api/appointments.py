@@ -34,6 +34,10 @@ def permitted_lead(name):
 
 def own_event(name, write=False, for_update=False):
 	name = record_name(name)
+	from crm.migration.appointments import linked_event
+
+	if write and linked_event(name):
+		deny()
 	if not frappe.db.exists("Event", {"name": name, "owner": frappe.session.user, "event_type": "Private"}):
 		deny()
 	doc = frappe.get_doc("Event", name, for_update=for_update)
@@ -71,14 +75,21 @@ def rows(user, start, end, lead=None):
 		{"user": user, "start": start, "end": end, "lead": lead},
 		as_dict=True,
 	)
+	from crm.migration.appointments import calendar_rows
+
+	imported, limited, imported_events = calendar_rows(user, start, end, lead)
 	visible = []
 	for row in candidates:
+		if row.name in imported_events:
+			continue
 		try:
 			own_event(row.name)
 		except (frappe.PermissionError, frappe.DoesNotExistError):
 			continue
 		visible.append(row)
-	return visible, len(candidates) > 500
+	visible.extend(frappe._dict(row) for row in imported)
+	visible.sort(key=lambda row: (str(row.starts_on), row.name))
+	return visible[:500], limited or len(candidates) > 500 or len(visible) > 500
 
 
 @frappe.whitelist(methods=["GET", "POST"])
