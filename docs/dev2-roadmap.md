@@ -51,6 +51,8 @@ Reuse the existing permission architecture, but do not treat it as this policy.
 
 ## 2. ERPNext data migration and synchronization
 
+- [x] Add opt-in same-site Appointment links with preview, live read-only calendar/My Day display, deduplication and ownership checks (local validation, 2026-10-20). Customer/Opportunity appointments and assignment-based calendars remain out of scope. See [calendar documentation](agent-calendar.md).
+
 - [ ] Inventory source counts, custom fields, statuses, owners, links, notes, emails, files, activities and duplicates.
 - [ ] Confirm scope: one-time migration, ongoing one-way sync, or selected two-way fields. Prefer a migration plus clearly owned ongoing integrations.
 - [ ] Confirm source-to-target mappings against deployed schemas:

@@ -93,3 +93,18 @@ My Calendar (all views, event states and booking/details dialogs), My Day, agent
 Agents choose **Light**, **Dark** or **System** from their account menu in the original CRM interface. The preference persists across reloads and follows operating-system changes when System is selected.
 
 The earlier `node docker/local/theme-browser.cjs` standalone-agent checks need adapting to the shared interface. That script was used to check light/dark surfaces and primary text contrast, calendar event colours and native controls, agent theme persistence/system switching and mobile width. This check reads local synthetic data without saving appointments or changing account access.
+
+
+## ERPNext Appointment sync (2026-10-20)
+
+In **Settings > ERPNext sync > ERPNext appointments**, select **Preview appointments**, review the batch, then **Sync ready appointments in this batch**. Preview checks 50 records at a time; use **Preview next batch** for the next page. This is an explicit opt-in independent of automatic Lead sync. Sync the source Lead first when an appointment references a Lead.
+
+Because ERPNext and CRM share a site, approved appointments are linked rather than copied into new Events. Calendar refresh and My Day read their current ERPNext values. Scheduled time, customer name and Open/Closed/Unverified status remain authoritative in ERPNext. Duration comes from Appointment Booking Settings, must be positive and at most seven days. Closed is not interpreted as completed or cancelled. Only Open appointments appear in My Day.
+
+Imported appointments are read-only in CRM. Edit them in ERPNext; refresh CRM to see changes. Their existing linked Event is suppressed from the same calendar result to avoid duplicates and cannot be edited through CRM appointment endpoints while linked. **Unlink from CRM calendar** removes only the opt-in link, preserving the source Appointment and Event. An Event that independently satisfies the original calendar policy may then appear normally.
+
+Visibility is creator-based, matching the personal calendar policy. Assignment, Employee participation and sharing do not broaden scope. Staff also need Appointment and mapped CRM Lead read permissions. Agents must own both the Appointment and its mapped lead. Guest-created, disabled-creator, unmapped-lead, Customer/Opportunity-linked and invalid-duration records need review; they are not automatically reassigned or converted. Unlinked-party appointments are supported. Customer email, phone, notes, participants and verification tokens are not projected into the calendar. This feature does not import the appointment into the lead activity timeline.
+
+Mappings and ownership are rechecked on every calendar read. Deleted sources disappear; repeated sync is idempotent. Queries are bounded and use the calendar truncation notice. Local deployment requires `bench --site crm.localhost migrate` and rebuilt frontend assets. No production data was accessed or changed; a separate staging site and production-version validation are still required.
+
+Validation: `crm.tests.test_appointment_sync` covers opt-in/unlink, duplicates, read-only enforcement, live updates/deletion, ownership/lead restrictions and administrator-only linking. Run `node docker/local/appointment-sync-browser.cjs` for the real settings preview endpoint and a controlled imported-row display fixture. Existing agent and My Day regression suites also apply.
