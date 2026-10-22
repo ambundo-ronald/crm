@@ -29,6 +29,8 @@ Run `bench --site <site> migrate` and rebuild frontend assets on deployment. Mig
 
 ## Local validation
 
+Invitation fix (2026-10-22): An existing Agent browser session was blocked from opening the invitation acceptance API. The guard now allows that exact API, the `/update-password` page, and Frappe's password-strength/update APIs. Invitation keys and Frappe's password validation remain required by their handlers; ERPNext/Desk, private files and unrelated APIs remain blocked. Seven isolated request-guard tests pass via `python -m unittest discover -s crm/tests -p '*guard_unit.py' -v`. End-to-end invitation/password verification for this fix remains pending because the local Docker WSL engine cannot start. This patch must be deployed to the affected site before it changes the user's invitation flow.
+
 Local site: http://localhost:18000/crm. Synthetic agent: `dev2.agent.a@example.invalid`, password `Local-Dev2-Only-2026`. These fixtures belong only on the isolated, mail-muted `crm.localhost` site and must never be deployed.
 
 After deploying the updated app into the local bench:

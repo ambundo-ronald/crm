@@ -22,6 +22,11 @@ METHODS = frozenset(
 		"login",
 		"logout",
 		"frappe.auth.get_logged_user",
+		# Public onboarding endpoints retain their own invitation-key/password checks.
+		# A browser may already carry an Agent session when an invite is opened.
+		"crm.api.accept_invitation",
+		"frappe.core.doctype.user.user.update_password",
+		"frappe.core.doctype.user.user.test_password_strength",
 	}
 )
 
@@ -77,7 +82,7 @@ def restrict_request():
 			return
 	elif (path == "/crm" or path.startswith("/crm/")) and request.method in ("GET", "HEAD"):
 		return
-	elif path in ("/crm-agent", "/login") and request.method in ("GET", "HEAD"):
+	elif path in ("/crm-agent", "/login", "/update-password") and request.method in ("GET", "HEAD"):
 		# Website controllers handle redirects; raising Redirect from auth_hooks
 		# bypasses Frappe's website redirect handling and produces an error page.
 		return

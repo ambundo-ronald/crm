@@ -8,6 +8,11 @@ Scope decision (2026-10-04): Finance handles commissions separately. Commission 
 
 Scope decision (2026-10-06): Agents use the original CRM UI and the normal invitation flow with the Agent role. The separate agent workspace is retired. The Agents settings page remains for administrator suspension/reactivation and access history. See [Agent access](commission-agents.md).
 
+Scope decision (2026-10-22): The entire sales team is moving to Frappe CRM and will stop using ERPNext CRM. ERPNext remains the underlying business system; sales workflows must be completed in Frappe CRM. Read-only imported appointments are an interim state, not the final workflow.
+
+- [ ] Enable editing imported appointments inside Frappe CRM, updating the original ERPNext Appointment with ownership/permission checks, concurrent-edit protection, and consistent Event/status handling. Validate rescheduling, closure/reopening and automation effects on an isolated site before release.
+- [ ] Verify Agent invitation acceptance through password setup and first CRM login end-to-end. The request guard now admits the exact invitation/password routes; isolated guard tests pass, but full local verification is blocked by Docker Desktop's WSL startup failure (2026-10-22).
+
 ## 0. Establish a safe baseline
 
 - [ ] Record deployed Frappe/ERPNext versions, installed apps, hosting, and whether CRM shares the ERPNext site.
