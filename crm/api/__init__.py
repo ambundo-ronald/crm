@@ -84,6 +84,8 @@ def check_app_permission():
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=10, seconds=60 * 60)
 def accept_invitation(key: str | None = None):
+	from crm.utils.invitation_diagnostics import invitation_step
+
 	if not key:
 		frappe.throw(_("Invalid or expired key"))
 
@@ -91,8 +93,9 @@ def accept_invitation(key: str | None = None):
 	if not result:
 		frappe.throw(_("Invalid or expired key"))
 	invitation = frappe.get_doc("CRM Invitation", result[0])
-	is_new_user = invitation.accept()
-	invitation.reload()
+	with invitation_step("accept_and_create_account"):
+		is_new_user = invitation.accept()
+		invitation.reload()
 
 	# this is a GET request, which is rolled back unless a commit is requested
 	frappe.local.flags.commit = True
@@ -102,10 +105,12 @@ def accept_invitation(key: str | None = None):
 		if is_new_user:
 			# a new user has no password yet, send them to the set password page
 			# which logs them in and redirects to /crm once the password is set
-			user = frappe.get_doc("User", invitation.email)
-			frappe.local.response["location"] = user._reset_password()
+			with invitation_step("create_password_setup_link"):
+				user = frappe.get_doc("User", invitation.email)
+				frappe.local.response["location"] = user._reset_password()
 		else:
-			frappe.local.login_manager.login_as(invitation.email)
+			with invitation_step("existing_account_login"):
+				frappe.local.login_manager.login_as(invitation.email)
 			frappe.local.response["location"] = "/crm"
 
 
